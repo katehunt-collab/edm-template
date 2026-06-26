@@ -62,7 +62,7 @@
     </div>
 
     <!-- Backup Recovery Alert Banner -->
-    <div id="recoveryBanner" class="no-print hidden w-full max-w-xl mb-4 p-3.5 bg-amber-50 border border-amber-200 rounded-2xl flex items-center justify-between gap-3 text-xs shadow-sm animate-bounce">
+    <div id="recoveryBanner" class="no-print hidden w-full max-w-xl mb-4 p-3.5 bg-amber-50 border border-amber-200 rounded-2xl flex items-center justify-between gap-3 text-xs shadow-sm">
         <div class="flex items-center gap-2.5 text-amber-800">
             <i class="fa-solid fa-clock-rotate-left text-base text-amber-600"></i>
             <div>
@@ -123,7 +123,7 @@
                             <span class="text-[11px] text-slate-400 font-medium">Just now</span>
                         </div>
                         <div class="text-[13px] font-bold text-slate-900 truncate mt-0.5" id="inboxSubject">Subject Line Placeholder</div>
-                        <div class="text-[13px] text-slate-500 truncate mt-0.5" id="inboxPreviewText">Preview Text Placeholder...</div>
+                        <div class="text-[13px] text-slate-500 truncate mt-0.5" id="inboxPreviewText">Preview Text Placeholder next to subject line...</div>
                     </div>
                 </div>
             </div>
@@ -149,7 +149,7 @@
                 <!-- Logo PlaceHolder Box -->
                 <div class="relative mx-auto inline-block">
                     <div onclick="openImageManager('logo')" data-id="logo" class="placeholder-box drop-target w-32 h-10 rounded-lg flex flex-col items-center justify-center overflow-hidden border border-slate-200">
-                        <img id="logo-img" class="hidden w-full h-full object-contain p-1" onerror="handleImageError(this)" />
+                        <img id="logo-img" class="hidden w-full h-full object-contain p-1" onerror="handleImageError(this, 'logo')" />
                         <div id="logo-svg" class="flex flex-col items-center justify-center text-slate-400 opacity-60">
                             <svg width="24" height="24" viewBox="0 0 100 100" class="stroke-current fill-none"><circle cx="50" cy="50" r="24" stroke-width="2"/><circle cx="38" cy="50" r="24" stroke-width="2"/><circle cx="62" cy="50" r="24" stroke-width="2"/></svg>
                         </div>
@@ -186,7 +186,7 @@
             <!-- Hero Image PlaceHolder Box -->
             <div class="px-2">
                 <div onclick="openImageManager('hero')" data-id="hero" class="placeholder-box drop-target w-full aspect-[16/9] rounded-3xl flex items-center justify-center relative shadow-sm overflow-hidden">
-                    <img id="hero-img" class="hidden w-full h-full object-cover" onerror="handleImageError(this)" />
+                    <img id="hero-img" class="hidden w-full h-full object-cover" onerror="handleImageError(this, 'hero')" />
                     <div id="hero-svg" class="flex items-center justify-center">
                         <svg width="100" height="100" viewBox="0 0 100 100" class="text-slate-300 opacity-80 stroke-current fill-none">
                             <circle cx="50" cy="50" r="32" stroke-width="1.5"/><circle cx="34" cy="50" r="32" stroke-width="1.5"/><circle cx="66" cy="50" r="32" stroke-width="1.5"/><circle cx="50" cy="34" r="32" stroke-width="1.5"/><circle cx="50" cy="66" r="32" stroke-width="1.5"/>
@@ -203,9 +203,8 @@
                 <div class="space-y-8 max-w-sm mx-auto">
                     <!-- Ft1 -->
                     <div class="flex gap-4 items-start relative group">
-                        <div class="section-label no-print">Ft1</div>
                         <div onclick="openImageManager('ft1')" data-id="ft1" class="placeholder-box drop-target shrink-0 w-12 h-12 rounded-xl flex items-center justify-center shadow-sm overflow-hidden">
-                            <img id="ft1-img" class="hidden w-full h-full object-cover" onerror="handleImageError(this)" />
+                            <img id="ft1-img" class="hidden w-full h-full object-cover" onerror="handleImageError(this, 'ft1')" />
                             <div id="ft1-svg" class="flex items-center justify-center"><i class="fa-solid fa-plus text-slate-300"></i></div>
                         </div>
                         <div class="space-y-1">
@@ -215,9 +214,8 @@
                     </div>
                     <!-- Ft2 -->
                     <div class="flex gap-4 items-start relative group">
-                        <div class="section-label no-print">Ft2</div>
                         <div onclick="openImageManager('ft2')" data-id="ft2" class="placeholder-box drop-target shrink-0 w-12 h-12 rounded-xl flex items-center justify-center shadow-sm overflow-hidden">
-                            <img id="ft2-img" class="hidden w-full h-full object-cover" onerror="handleImageError(this)" />
+                            <img id="ft2-img" class="hidden w-full h-full object-cover" onerror="handleImageError(this, 'ft2')" />
                             <div id="ft2-svg" class="flex items-center justify-center"><i class="fa-solid fa-plus text-slate-300"></i></div>
                         </div>
                         <div class="space-y-1">
@@ -227,9 +225,8 @@
                     </div>
                     <!-- Ft3 -->
                     <div class="flex gap-4 items-start relative group">
-                        <div class="section-label no-print">Ft3</div>
                         <div onclick="openImageManager('ft3')" data-id="ft3" class="placeholder-box drop-target shrink-0 w-12 h-12 rounded-xl flex items-center justify-center shadow-sm overflow-hidden">
-                            <img id="ft3-img" class="hidden w-full h-full object-cover" onerror="handleImageError(this)" />
+                            <img id="ft3-img" class="hidden w-full h-full object-cover" onerror="handleImageError(this, 'ft3')" />
                             <div id="ft3-svg" class="flex items-center justify-center"><i class="fa-solid fa-plus text-slate-300"></i></div>
                         </div>
                         <div class="space-y-1">
@@ -245,7 +242,7 @@
                 <div class="section-label no-print">Closer</div>
                 <div class="bg-slate-50/50 rounded-3xl p-8 text-center border border-slate-100 flex flex-col items-center space-y-4">
                     <div onclick="openImageManager('closer')" data-id="closer" class="placeholder-box drop-target w-12 h-12 rounded-xl flex items-center justify-center shadow-sm overflow-hidden">
-                        <img id="closer-img" class="hidden w-full h-full object-cover" onerror="handleImageError(this)" />
+                        <img id="closer-img" class="hidden w-full h-full object-cover" onerror="handleImageError(this, 'closer')" />
                         <div id="closer-svg" class="flex items-center justify-center"><i class="fa-solid fa-plus text-slate-300"></i></div>
                     </div>
                     <h2 id="field_closer_sub" contenteditable="true" data-name="Subheadline" data-max="60" data-min="16" data-required="true" class="text-lg font-extrabold text-slate-900 max-w-sm">Lorem ipsum dolor sit amet consectetur</h2>
@@ -430,9 +427,12 @@
             } else { closeImageManager(); }
         }
 
-        function handleImageError(img) {
-            const idMatch = img.src.match(/id=([^\&]+)/);
-            if (idMatch && idMatch[1]) img.src = `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w1000`;
+        function handleImageError(img, targetId) {
+            // Error Guard: If the image failed to load, revert it cleanly and prevent the broken file icon
+            img.classList.add('hidden');
+            const svgEl = document.getElementById(`${targetId}-svg`);
+            if (svgEl) svgEl.classList.remove('hidden');
+            console.warn(`External image failed to load for target ID: ${targetId}`);
         }
 
         function applyImageToElement(id, type, val) {
