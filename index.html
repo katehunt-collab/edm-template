@@ -112,6 +112,9 @@
             <p class="text-xs text-slate-500">Edit copy inline. Drop images. Share URL to get feedback.</p>
         </div>
         <div class="flex items-center gap-2">
+            <button onclick="restoreAllButtons()" id="restoreButtonsBtn" class="hidden bg-emerald-500 hover:bg-emerald-600 text-white text-xs px-3.5 py-2 rounded-lg font-bold flex items-center gap-1.5 transition-all shadow-md shadow-emerald-500/15">
+                <i class="fa-solid fa-plus text-sm"></i> Restore Buttons
+            </button>
             <button onclick="toggleComments()" id="commentToggleBtn" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs px-3.5 py-2 rounded-lg font-semibold flex items-center gap-2 transition-all">
                 <i class="fa-regular fa-comment-dots text-sm"></i> Comments
             </button>
@@ -232,8 +235,18 @@
 
                 <!-- Dual CTA Buttons -->
                 <div class="mt-6 flex flex-wrap items-center justify-center gap-4">
-                    <span id="btn_cta1" role="button" contenteditable="true" data-name="CTA 1" data-words="3" data-required="true" class="btn-pill">Default</span>
-                    <span id="btn_cta2" role="button" contenteditable="true" data-name="CTA 2" data-words="3" data-required="false" class="btn-pill-secondary">Default</span>
+                    <div class="relative group/btn inline-block">
+                        <span id="btn_cta1" role="button" contenteditable="true" data-name="CTA 1" data-words="3" data-required="true" class="btn-pill block">Default</span>
+                        <button onclick="toggleButtonVisibility('btn_cta1')" class="no-print absolute -top-2 -right-2 bg-rose-500 hover:bg-rose-600 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] shadow-md transition-all opacity-0 group-hover/btn:opacity-100 focus:opacity-100" title="Hide Button">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </div>
+                    <div class="relative group/btn inline-block">
+                        <span id="btn_cta2" role="button" contenteditable="true" data-name="CTA 2" data-words="3" data-required="false" class="btn-pill-secondary block">Default</span>
+                        <button onclick="toggleButtonVisibility('btn_cta2')" class="no-print absolute -top-2 -right-2 bg-rose-500 hover:bg-rose-600 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] shadow-md transition-all opacity-0 group-hover/btn:opacity-100 focus:opacity-100" title="Hide Button">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Disclaimer Text -->
@@ -349,7 +362,12 @@
 
                     <!-- Closer CTA Button -->
                     <div class="pt-2">
-                        <span id="btn_closer_cta" role="button" contenteditable="true" data-name="CTA" data-words="3" data-required="true" class="btn-pill-secondary border-blue-500/30 px-8 py-2 text-sm">Default</span>
+                        <div class="relative group/btn inline-block">
+                            <span id="btn_closer_cta" role="button" contenteditable="true" data-name="CTA" data-words="3" data-required="true" class="btn-pill-secondary border-blue-500/30 px-8 py-2 text-sm block">Default</span>
+                            <button onclick="toggleButtonVisibility('btn_closer_cta')" class="no-print absolute -top-2 -right-2 bg-rose-500 hover:bg-rose-600 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] shadow-md transition-all opacity-0 group-hover/btn:opacity-100 focus:opacity-100" title="Hide Button">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -396,6 +414,37 @@
             syncInboxPreviews();
             loadStateFromURL();
         };
+
+        // Handle button hides dynamically
+        function toggleButtonVisibility(id) {
+            const buttonElement = document.getElementById(id);
+            if (buttonElement) {
+                const wrapper = buttonElement.closest('.group\\/btn');
+                if (wrapper) {
+                    wrapper.classList.add('hidden');
+                }
+            }
+            updateRestoreButtonVisibility();
+        }
+
+        // Restore all interactive buttons
+        function restoreAllButtons() {
+            document.querySelectorAll('.group\\/btn').forEach(wrapper => {
+                wrapper.classList.remove('hidden');
+            });
+            updateRestoreButtonVisibility();
+        }
+
+        // Check helper logic for the restore banner button
+        function updateRestoreButtonVisibility() {
+            const hiddenButtons = document.querySelectorAll('.group\\/btn.hidden');
+            const restoreBtn = document.getElementById('restoreButtonsBtn');
+            if (hiddenButtons.length > 0) {
+                restoreBtn.classList.remove('hidden');
+            } else {
+                restoreBtn.classList.add('hidden');
+            }
+        }
 
         // Real-Time character count / input boundary feedback
         function setupSpecTrackers() {
@@ -584,6 +633,9 @@
                 disclaimer: document.getElementById('field_disclaimer').innerText,
                 closer_sub: document.getElementById('field_closer_sub').innerText,
                 closer_desc: document.getElementById('field_closer_desc').innerText,
+                cta1_hidden: document.getElementById('btn_cta1').closest('.group\\/btn').classList.contains('hidden'),
+                cta2_hidden: document.getElementById('btn_cta2').closest('.group\\/btn').classList.contains('hidden'),
+                closer_cta_hidden: document.getElementById('btn_closer_cta').closest('.group\\/btn').classList.contains('hidden'),
                 features: {
                     title: document.getElementById('field_feature_title').innerText,
                     f1_title: document.getElementById('field_ft1_title').innerText,
@@ -606,7 +658,7 @@
             document.execCommand('copy');
             document.body.removeChild(dummy);
 
-            alert('Your interactive share URL with all modified copy and comment feedback has been successfully copied to your clipboard!');
+            alert('Your interactive share URL with all modified copy, button layouts, and comment feedback has been successfully copied to your clipboard!');
         }
 
         function loadStateFromURL() {
@@ -627,6 +679,12 @@
                 if (state.disclaimer) document.getElementById('field_disclaimer').innerText = state.disclaimer;
                 if (state.closer_sub) document.getElementById('field_closer_sub').innerText = state.closer_sub;
                 if (state.closer_desc) document.getElementById('field_closer_desc').innerText = state.closer_desc;
+                
+                // Load saved button states
+                if (state.cta1_hidden) toggleButtonVisibility('btn_cta1');
+                if (state.cta2_hidden) toggleButtonVisibility('btn_cta2');
+                if (state.closer_cta_hidden) toggleButtonVisibility('btn_closer_cta');
+
                 if (state.features) {
                     if (state.features.title) document.getElementById('field_feature_title').innerText = state.features.title;
                     if (state.features.f1_title) document.getElementById('field_ft1_title').innerText = state.features.f1_title;
