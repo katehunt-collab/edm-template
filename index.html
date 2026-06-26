@@ -102,14 +102,20 @@
 </head>
 <body class="p-4 md:p-8 flex flex-col items-center">
 
+    <!-- Custom Toast Notification instead of Browser Alert -->
+    <div id="toastNotification" class="no-print fixed top-4 right-4 bg-emerald-600 text-white px-5 py-3.5 rounded-2xl shadow-2xl z-50 transform translate-y-[-150%] transition-transform duration-300 flex items-center gap-3 font-semibold text-xs border border-emerald-500">
+        <i class="fa-solid fa-circle-check text-base text-emerald-200"></i>
+        <span id="toastMessage">Changes Saved! Link updated in address bar.</span>
+    </div>
+
     <!-- Floating Instruction and Action Controller (Non-Printable) -->
     <div class="no-print w-full max-w-xl mb-6 p-4 bg-white border border-slate-200 rounded-2xl shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
         <div>
             <h2 class="text-sm font-bold text-slate-800 flex items-center gap-1.5">
-                <span class="w-2.5 h-2.5 bg-green-500 rounded-full animate-ping"></span>
+                <span class="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-ping"></span>
                 Live Collaboration Workspace
             </h2>
-            <p class="text-xs text-slate-500">Edit copy inline. Drop images. Share URL to get feedback.</p>
+            <p class="text-xs text-slate-500">Edit copy inline. URLs update and auto-save instantly.</p>
         </div>
         <div class="flex items-center gap-2">
             <button onclick="restoreAllButtons()" id="restoreButtonsBtn" class="hidden bg-emerald-500 hover:bg-emerald-600 text-white text-xs px-3.5 py-2 rounded-lg font-bold flex items-center gap-1.5 transition-all shadow-md shadow-emerald-500/15">
@@ -233,17 +239,17 @@
                     </p>
                 </div>
 
-                <!-- Dual CTA Buttons -->
+                <!-- Dual CTA Buttons with simplified hover action buttons -->
                 <div class="mt-6 flex flex-wrap items-center justify-center gap-4">
-                    <div class="relative group/btn inline-block">
+                    <div class="relative cta-wrapper group inline-block">
                         <span id="btn_cta1" role="button" contenteditable="true" data-name="CTA 1" data-words="3" data-required="true" class="btn-pill block">Default</span>
-                        <button onclick="toggleButtonVisibility('btn_cta1')" class="no-print absolute -top-2 -right-2 bg-rose-500 hover:bg-rose-600 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] shadow-md transition-all opacity-0 group-hover/btn:opacity-100 focus:opacity-100" title="Hide Button">
+                        <button onclick="toggleButtonVisibility('btn_cta1')" class="no-print absolute -top-2 -right-2 bg-rose-500 hover:bg-rose-600 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] shadow-md transition-all opacity-0 group-hover:opacity-100 focus:opacity-100" title="Hide Button">
                             <i class="fa-solid fa-trash-can"></i>
                         </button>
                     </div>
-                    <div class="relative group/btn inline-block">
+                    <div class="relative cta-wrapper group inline-block">
                         <span id="btn_cta2" role="button" contenteditable="true" data-name="CTA 2" data-words="3" data-required="false" class="btn-pill-secondary block">Default</span>
-                        <button onclick="toggleButtonVisibility('btn_cta2')" class="no-print absolute -top-2 -right-2 bg-rose-500 hover:bg-rose-600 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] shadow-md transition-all opacity-0 group-hover/btn:opacity-100 focus:opacity-100" title="Hide Button">
+                        <button onclick="toggleButtonVisibility('btn_cta2')" class="no-print absolute -top-2 -right-2 bg-rose-500 hover:bg-rose-600 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] shadow-md transition-all opacity-0 group-hover:opacity-100 focus:opacity-100" title="Hide Button">
                             <i class="fa-solid fa-trash-can"></i>
                         </button>
                     </div>
@@ -362,9 +368,9 @@
 
                     <!-- Closer CTA Button -->
                     <div class="pt-2">
-                        <div class="relative group/btn inline-block">
+                        <div class="relative cta-wrapper group inline-block">
                             <span id="btn_closer_cta" role="button" contenteditable="true" data-name="CTA" data-words="3" data-required="true" class="btn-pill-secondary border-blue-500/30 px-8 py-2 text-sm block">Default</span>
-                            <button onclick="toggleButtonVisibility('btn_closer_cta')" class="no-print absolute -top-2 -right-2 bg-rose-500 hover:bg-rose-600 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] shadow-md transition-all opacity-0 group-hover/btn:opacity-100 focus:opacity-100" title="Hide Button">
+                            <button onclick="toggleButtonVisibility('btn_closer_cta')" class="no-print absolute -top-2 -right-2 bg-rose-500 hover:bg-rose-600 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] shadow-md transition-all opacity-0 group-hover:opacity-100 focus:opacity-100" title="Hide Button">
                                 <i class="fa-solid fa-trash-can"></i>
                             </button>
                         </div>
@@ -407,37 +413,48 @@
         let comments = [];
         let activeComponentContext = 'general';
         let showCommentsSidebar = false;
+        let isSavingSilently = false;
 
         // Initialize Workspace Bindings
         window.onload = function() {
             setupSpecTrackers();
             syncInboxPreviews();
             loadStateFromURL();
+            
+            // Auto-save changes dynamically as the user types
+            const editableElements = document.querySelectorAll('[contenteditable="true"]');
+            editableElements.forEach(el => {
+                el.addEventListener('input', function() {
+                    autoSaveStateSilently();
+                });
+            });
         };
 
         // Handle button hides dynamically
         function toggleButtonVisibility(id) {
             const buttonElement = document.getElementById(id);
             if (buttonElement) {
-                const wrapper = buttonElement.closest('.group\\/btn');
+                const wrapper = buttonElement.closest('.cta-wrapper');
                 if (wrapper) {
                     wrapper.classList.add('hidden');
                 }
             }
             updateRestoreButtonVisibility();
+            autoSaveStateSilently();
         }
 
         // Restore all interactive buttons
         function restoreAllButtons() {
-            document.querySelectorAll('.group\\/btn').forEach(wrapper => {
+            document.querySelectorAll('.cta-wrapper').forEach(wrapper => {
                 wrapper.classList.remove('hidden');
             });
             updateRestoreButtonVisibility();
+            autoSaveStateSilently();
         }
 
         // Check helper logic for the restore banner button
         function updateRestoreButtonVisibility() {
-            const hiddenButtons = document.querySelectorAll('.group\\/btn.hidden');
+            const hiddenButtons = Array.from(document.querySelectorAll('.cta-wrapper')).filter(el => el.classList.contains('hidden'));
             const restoreBtn = document.getElementById('restoreButtonsBtn');
             if (hiddenButtons.length > 0) {
                 restoreBtn.classList.remove('hidden');
@@ -512,6 +529,7 @@
                     img.src = e.target.result;
                     img.classList.remove('hidden');
                     document.getElementById(svgId).classList.add('hidden');
+                    autoSaveStateSilently();
                 }
                 reader.readAsDataURL(input.files[0]);
             }
@@ -591,6 +609,7 @@
 
             document.getElementById('commentBody').value = '';
             renderComments();
+            autoSaveStateSilently();
         }
 
         function renderComments() {
@@ -620,9 +639,13 @@
             );
         }
 
-        // State packaging to Share Links (Offline query-state)
-        function generateShareLink() {
-            const state = {
+        // Pack the entire application state into a JSON object
+        function packageCurrentState() {
+            const cta1Wrapper = document.getElementById('btn_cta1').closest('.cta-wrapper');
+            const cta2Wrapper = document.getElementById('btn_cta2').closest('.cta-wrapper');
+            const closerCtaWrapper = document.getElementById('btn_closer_cta').closest('.cta-wrapper');
+
+            return {
                 subject: document.getElementById('field_subject').innerText,
                 preview: document.getElementById('field_preview_text').innerText,
                 wayfinder: document.getElementById('field_wayfinder').innerText,
@@ -633,9 +656,9 @@
                 disclaimer: document.getElementById('field_disclaimer').innerText,
                 closer_sub: document.getElementById('field_closer_sub').innerText,
                 closer_desc: document.getElementById('field_closer_desc').innerText,
-                cta1_hidden: document.getElementById('btn_cta1').closest('.group\\/btn').classList.contains('hidden'),
-                cta2_hidden: document.getElementById('btn_cta2').closest('.group\\/btn').classList.contains('hidden'),
-                closer_cta_hidden: document.getElementById('btn_closer_cta').closest('.group\\/btn').classList.contains('hidden'),
+                cta1_hidden: cta1Wrapper ? cta1Wrapper.classList.contains('hidden') : false,
+                cta2_hidden: cta2Wrapper ? cta2Wrapper.classList.contains('hidden') : false,
+                closer_cta_hidden: closerCtaWrapper ? closerCtaWrapper.classList.contains('hidden') : false,
                 features: {
                     title: document.getElementById('field_feature_title').innerText,
                     f1_title: document.getElementById('field_ft1_title').innerText,
@@ -647,9 +670,25 @@
                 },
                 comments: comments
             };
+        }
 
-            const hash = btoa(unescape(encodeURIComponent(JSON.stringify(state))));
-            const shareUrl = `${window.location.origin}${window.location.pathname}#state=${hash}`;
+        // Automatically update the browser's URL hash silently as changes are made
+        function autoSaveStateSilently() {
+            try {
+                const state = packageCurrentState();
+                const hash = btoa(unescape(encodeURIComponent(JSON.stringify(state))));
+                
+                // silenty replace the hash in the browser address bar without creating infinite back-button history
+                history.replaceState(null, null, `${window.location.pathname}#state=${hash}`);
+            } catch (err) {
+                console.warn('Failed to silently update URL hash:', err);
+            }
+        }
+
+        // Generate and Copy Share Link with Toast Notification
+        function generateShareLink() {
+            autoSaveStateSilently();
+            const shareUrl = window.location.href;
             
             const dummy = document.createElement('textarea');
             document.body.appendChild(dummy);
@@ -658,7 +697,19 @@
             document.execCommand('copy');
             document.body.removeChild(dummy);
 
-            alert('Your interactive share URL with all modified copy, button layouts, and comment feedback has been successfully copied to your clipboard!');
+            showToast("Visual draft and comments copy link updated in address bar!");
+        }
+
+        // Custom slide-down Notification Toast
+        function showToast(msg) {
+            const toast = document.getElementById('toastNotification');
+            document.getElementById('toastMessage').innerText = msg;
+            
+            toast.classList.remove('translate-y-[-150%]');
+            
+            setTimeout(() => {
+                toast.classList.add('translate-y-[-150%]');
+            }, 3500);
         }
 
         function loadStateFromURL() {
@@ -700,6 +751,7 @@
                 }
 
                 syncInboxPreviews();
+                updateRestoreButtonVisibility();
             } catch (err) {
                 console.error('Failed to unpack shared state:', err);
             }
