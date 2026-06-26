@@ -3,685 +3,566 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Visual Copywriting Template</title>
+    <title>Visual Copywriting Template & Inbox Preview</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=SF+Pro+Text:wght@400;500;600&display=swap');
         
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6;
-            color: #111827;
-            overflow-x: hidden;
+            background-color: #f1f5f9;
+            color: #0f172a;
         }
 
-        /* Highlight editable areas on hover to help the user */
+        /* SF Pro style for iPhone inbox preview simulator */
+        .font-sf {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        /* Focus & editable helper styles */
+        [contenteditable="true"] {
+            outline: none;
+            transition: all 0.2s;
+        }
+
         [contenteditable="true"]:hover {
-            outline: 2px dashed #3b82f6;
+            background-color: rgba(59, 130, 246, 0.05);
+            outline: 2px dashed rgba(59, 130, 246, 0.4);
             outline-offset: 4px;
             cursor: text;
         }
 
-        /* Placeholder graphic pattern styling */
+        [contenteditable="true"]:focus {
+            background-color: rgba(59, 130, 246, 0.08);
+            outline: 2px solid #3b82f6;
+            outline-offset: 4px;
+        }
+
+        /* Grid placeholder patterns */
         .placeholder-box {
-            background-image: linear-gradient(45deg, #e5e7eb 25%, transparent 25%, transparent 50%, #e5e7eb 50%, #e5e7eb 75%, transparent 75%, transparent);
-            background-size: 40px 40px;
-            background-color: #f9fafb;
+            background-image: linear-gradient(45deg, #e2e8f0 25%, transparent 25%, transparent 50%, #e2e8f0 50%, #e2e8f0 75%, transparent 75%, transparent);
+            background-size: 30px 30px;
+            background-color: #f8fafc;
             border: 2px dashed #cbd5e1;
-            transition: all 0.2s ease-in-out;
+            transition: all 0.3s ease;
             position: relative;
             overflow: hidden;
         }
 
         .placeholder-box:hover {
             border-color: #3b82f6;
-            background-color: #eff6ff;
-            transform: scale(1.01);
+            background-color: #f0fdf4;
+            cursor: pointer;
         }
 
-        /* Hover overlay instruction for images */
-        .placeholder-box::before {
-            content: 'Click / Drag to Upload';
+        /* Spec guidance popups */
+        .spec-popup {
             position: absolute;
-            inset: 0;
-            background-color: rgba(59, 130, 246, 0.9);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.75rem;
-            font-weight: 600;
-            opacity: 0;
-            transition: opacity 0.2s ease;
-            z-index: 10;
-            text-align: center;
-            padding: 4px;
+            bottom: calc(100% + 12px);
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 50;
+            pointer-events: none;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        /* Adjust hover text size for smaller icon boxes */
-        .placeholder-box.w-12::before, .placeholder-box.w-24::before {
-            font-size: 0.65rem;
-            content: 'Upload';
-        }
-
-        .placeholder-box:hover::before {
-            opacity: 1;
-        }
-
-        .btn-primary {
+        .btn-pill {
+            display: inline-block;
             background-color: #2563eb;
             color: white;
             padding: 0.75rem 2rem;
             border-radius: 9999px;
             font-weight: 600;
-            transition: all 0.2s;
-            display: inline-block;
             text-align: center;
-            cursor: pointer;
+            border: 2px solid #2563eb;
+            transition: all 0.2s;
         }
 
-        .btn-secondary {
-            border: 1px solid #d1d5db;
+        .btn-pill-secondary {
+            display: inline-block;
+            background-color: white;
             color: #2563eb;
             padding: 0.75rem 2rem;
             border-radius: 9999px;
             font-weight: 600;
-            background-color: white;
-            display: inline-block;
             text-align: center;
-            cursor: pointer;
+            border: 2px solid #e2e8f0;
+            transition: all 0.2s;
         }
 
-        /* Component block containers allowing comments markers to pin cleanly */
-        .commentable-block {
-            position: relative;
-            transition: box-shadow 0.2s ease;
-        }
-        
-        .commentable-block.has-active-comment {
-            box-shadow: 0 0 0 2px #3b82f6, 0 10px 15px -3px rgba(59, 130, 246, 0.1);
-        }
-
+        /* Hide interface widgets during client export / print prints */
         @media print {
             .no-print { display: none !important; }
             body { background-color: white; padding: 0; }
-            .print-container { box-shadow: none !important; border: none !important; border-radius: 0 !important; }
+            .shadow-xl { box-shadow: none !important; }
+            .border-gray-100 { border: none !important; }
         }
     </style>
 </head>
 <body class="p-4 md:p-8 flex flex-col items-center">
 
-    <!-- Custom Toast Notification System -->
-    <div id="toastNotification" class="fixed bottom-5 right-5 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl border border-slate-800 flex items-center gap-3 translate-y-20 opacity-0 transition-all duration-300 z-50 max-w-sm">
-        <div id="toastIcon" class="bg-blue-500/20 text-blue-400 p-1.5 rounded-lg">
-            <i class="fa-solid fa-check"></i>
+    <!-- Floating Instruction and Action Controller (Non-Printable) -->
+    <div class="no-print w-full max-w-xl mb-6 p-4 bg-white border border-slate-200 rounded-2xl shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+        <div>
+            <h2 class="text-sm font-bold text-slate-800 flex items-center gap-1.5">
+                <span class="w-2.5 h-2.5 bg-green-500 rounded-full animate-ping"></span>
+                Live Collaboration Workspace
+            </h2>
+            <p class="text-xs text-slate-500">Edit copy inline. Drop images. Share URL to get feedback.</p>
         </div>
-        <div class="text-xs">
-            <p id="toastMessage" class="font-medium">Notification message goes here</p>
-        </div>
-    </div>
-
-    <!-- Instructions & Action Bar Overlay (Non-printable) -->
-    <div class="no-print w-full max-w-xl mb-6 p-4 bg-slate-900 border border-slate-800 rounded-2xl text-sm text-slate-100 shadow-xl flex flex-col gap-4">
-        <div class="flex items-start justify-between gap-3">
-            <div class="flex gap-3">
-                <div class="bg-blue-600/20 text-blue-400 p-2.5 rounded-xl shrink-0">
-                    <i class="fa-solid fa-comments text-lg"></i>
-                </div>
-                <div>
-                    <strong class="text-white text-base block mb-0.5">Interactive Review Workspace</strong> 
-                    <span class="text-slate-400 text-xs">Edit copy directly on screen and write pinpoint feedback comments.</span>
-                </div>
-            </div>
-            <!-- Live Comment Badge Trigger -->
-            <button onclick="toggleCommentsSidebar()" class="relative bg-slate-800 hover:bg-slate-700 text-slate-200 p-2 rounded-xl border border-slate-700 transition-all flex items-center justify-center">
-                <i class="fa-solid fa-comment-dots text-base"></i>
-                <span id="globalCommentCountBadge" class="absolute -top-1.5 -right-1.5 bg-rose-500 text-white text-[9px] font-bold h-5 w-5 rounded-full flex items-center justify-center border-2 border-slate-900 hidden">0</span>
+        <div class="flex items-center gap-2">
+            <button onclick="toggleComments()" id="commentToggleBtn" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs px-3.5 py-2 rounded-lg font-semibold flex items-center gap-2 transition-all">
+                <i class="fa-regular fa-comment-dots text-sm"></i> Comments
             </button>
-        </div>
-
-        <div class="border-t border-slate-800/80 pt-3 flex flex-wrap gap-2 justify-between items-center">
-            <div class="flex gap-2 w-full sm:w-auto">
-                <button onclick="saveStateToUrl()" class="flex-1 sm:flex-initial bg-blue-600 hover:bg-blue-500 text-white font-semibold px-4 py-2 rounded-lg text-xs flex items-center justify-center transition-all shadow-lg shadow-blue-500/20">
-                    <i class="fa-solid fa-share-nodes mr-2"></i> Save & Get Share Link
-                </button>
-                <button onclick="resetToDefaults()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium px-3 py-2 rounded-lg text-xs transition-all border border-slate-700">
-                    <i class="fa-solid fa-rotate-left mr-1"></i> Reset Copy
-                </button>
-            </div>
-            <button onclick="openPrintModal()" class="w-full sm:w-auto bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium px-4 py-2 rounded-lg text-xs transition-all border border-slate-700">
-                <i class="fa-solid fa-file-pdf mr-1.5"></i> Export PDF
+            <button onclick="generateShareLink()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3.5 py-2 rounded-lg font-bold flex items-center gap-2 transition-all shadow-md shadow-blue-500/15">
+                <i class="fa-solid fa-link text-sm"></i> Get Share Link
+            </button>
+            <button onclick="window.print()" class="bg-slate-800 hover:bg-slate-950 text-white text-xs px-3.5 py-2 rounded-lg font-semibold flex items-center gap-1.5 transition-all">
+                <i class="fa-solid fa-print"></i> Export
             </button>
         </div>
     </div>
 
-    <!-- Main Live Render Card Container -->
-    <div class="print-container w-full max-w-xl bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-100 relative">
-        
-        <!-- Interactive comment buttons nested visually inside the components -->
-        <!-- Component A: Hero Row -->
-        <div id="block-hero" class="commentable-block group/block">
-            <!-- Pinpoint comment indicator visible on hover or when comment exists -->
-            <button onclick="openSectionComments('Hero Component', 'block-hero')" class="no-print absolute top-3 right-3 bg-slate-900/90 hover:bg-blue-600 text-white text-[10px] font-bold py-1 px-2.5 rounded-full shadow-md opacity-0 group-hover/block:opacity-100 transition-all duration-200 flex items-center gap-1.5 z-20">
-                <i class="fa-solid fa-message"></i> <span>Feedback</span>
-                <span id="badge-block-hero" class="bg-rose-500 text-white text-[9px] h-4 w-4 rounded-full flex items-center justify-center hidden">0</span>
-            </button>
-
-            <header class="pt-12 pb-6 px-8 text-center">
-                <!-- Logo Placeholder Box -->
-                <div id="placeholder-logo" class="placeholder-box w-24 h-8 mx-auto rounded-md mb-4 flex items-center justify-center cursor-pointer" title="Click or drag image to upload logo">
-                    <svg width="40" height="40" viewBox="0 0 100 100" class="text-gray-400 opacity-50 svg-placeholder">
-                        <circle cx="50" cy="50" r="30" fill="none" stroke="currentColor" stroke-width="2"/>
-                        <circle cx="35" cy="50" r="30" fill="none" stroke="currentColor" stroke-width="2"/>
-                        <circle cx="65" cy="50" r="30" fill="none" stroke="currentColor" stroke-width="2"/>
-                    </svg>
-                </div>
-                <p id="copy-preheader" contenteditable="true" class="text-xs font-bold tracking-widest text-gray-500 uppercase mb-4">LOREM IPSUM</p>
-                <h1 class="text-3xl md:text-4xl font-bold leading-tight text-gray-900">
-                    <span id="copy-hero-primary" contenteditable="true">Lorem ipsum dolor sit</span>
-                    <span id="copy-hero-accent" contenteditable="true" class="text-blue-600">amet consectetur</span>
-                </h1>
-                <p id="copy-hero-body" contenteditable="true" class="mt-4 text-gray-500 text-sm leading-relaxed max-w-md mx-auto">
-                    Lorem ipsum dolor sit amet consectetur. Iaculis integer nisi amet et magnis in ac. Eget id urna nisi ultrices dui egestas vulputate. Viverra porta sit commodo lorem eu augue sed.
-                </p>
-                
-                <div class="mt-8 flex items-center justify-center gap-4">
-                    <span id="copy-btn-primary" role="button" contenteditable="true" class="btn-primary">Default</span>
-                    <span id="copy-btn-secondary" role="button" contenteditable="true" class="btn-secondary">Default</span>
-                </div>
-                <p id="copy-disclaimer" contenteditable="true" class="mt-4 text-[10px] text-gray-400 italic">*disclaimer text lorem ipsum</p>
-            </header>
-        </div>
-
-        <!-- Component B: Main Graphic -->
-        <div id="block-graphic" class="commentable-block group/block">
-            <button onclick="openSectionComments('Main Graphic Block', 'block-graphic')" class="no-print absolute top-3 right-3 bg-slate-900/90 hover:bg-blue-600 text-white text-[10px] font-bold py-1 px-2.5 rounded-full shadow-md opacity-0 group-hover/block:opacity-100 transition-all duration-200 flex items-center gap-1.5 z-20">
-                <i class="fa-solid fa-message"></i> <span>Feedback</span>
-                <span id="badge-block-graphic" class="bg-rose-500 text-white text-[9px] h-4 w-4 rounded-full flex items-center justify-center hidden">0</span>
-            </button>
-
-            <div class="px-6 py-4">
-                <div id="placeholder-main-graphic" class="placeholder-box w-full aspect-[2/1] rounded-3xl flex items-center justify-center cursor-pointer" title="Click or drag image to upload main graphic">
-                    <svg width="120" height="120" viewBox="0 0 100 100" class="text-gray-400 opacity-30 svg-placeholder">
-                        <circle cx="50" cy="50" r="40" fill="none" stroke="currentColor" stroke-width="1"/>
-                        <circle cx="30" cy="50" r="40" fill="none" stroke="currentColor" stroke-width="1"/>
-                        <circle cx="70" cy="50" r="40" fill="none" stroke="currentColor" stroke-width="1"/>
-                        <circle cx="50" cy="30" r="40" fill="none" stroke="currentColor" stroke-width="1"/>
-                        <circle cx="50" cy="70" r="40" fill="none" stroke="currentColor" stroke-width="1"/>
-                    </svg>
-                </div>
+    <div class="w-full max-w-xl relative">
+        <!-- Floating Spec Bubble Helper -->
+        <div id="specBubble" class="spec-popup hidden bg-slate-900 text-white px-3 py-2 rounded-xl shadow-xl text-xs font-medium border border-slate-700/50 flex flex-col gap-0.5">
+            <span id="specName" class="font-bold text-blue-400 text-[10px] uppercase tracking-wider">Field Specs</span>
+            <div class="flex items-center gap-3">
+                <span id="specRules" class="text-slate-300">Min 0, Max 0 Chars</span>
+                <span id="specCounter" class="bg-slate-800 px-1.5 py-0.5 rounded text-[11px] font-mono font-bold text-emerald-400">0/0</span>
             </div>
         </div>
 
-        <!-- Component C: Features Section -->
-        <div id="block-features" class="commentable-block group/block">
-            <button onclick="openSectionComments('Features Row Segment', 'block-features')" class="no-print absolute top-3 right-3 bg-slate-900/90 hover:bg-blue-600 text-white text-[10px] font-bold py-1 px-2.5 rounded-full shadow-md opacity-0 group-hover/block:opacity-100 transition-all duration-200 flex items-center gap-1.5 z-20">
-                <i class="fa-solid fa-message"></i> <span>Feedback</span>
-                <span id="badge-block-features" class="bg-rose-500 text-white text-[9px] h-4 w-4 rounded-full flex items-center justify-center hidden">0</span>
-            </button>
+        <div class="bg-white shadow-xl rounded-3xl overflow-hidden border border-slate-100 p-6 space-y-6">
 
-            <section class="px-10 py-8">
-                <h2 id="copy-features-headline" contenteditable="true" class="text-2xl font-bold text-center text-gray-900 mb-10">Headline goes here</h2>
+            <!-- Real-Time Inbox Client Simulator (Subject & Preview Text Display) -->
+            <div class="bg-slate-50 rounded-2xl p-4 border border-slate-200/60 font-sf space-y-3">
+                <div class="flex items-center justify-between text-[11px] text-slate-400 font-medium pb-2 border-b border-slate-200/50">
+                    <span class="flex items-center gap-1.5"><i class="fa-solid fa-envelope text-slate-400"></i> INBOX SIMULATOR PREVIEW</span>
+                    <span class="bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full text-[9px] font-bold tracking-wide">LIVE SYNCHRONIZATION</span>
+                </div>
                 
-                <div class="space-y-8 max-w-md mx-auto">
-                    <!-- Feature 1 -->
-                    <div class="flex gap-4">
-                        <div class="placeholder-box shrink-0 w-12 h-12 rounded-lg flex items-center justify-center cursor-pointer" title="Click or drag image to upload icon">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="text-gray-400 opacity-40 svg-placeholder">
-                                <rect x="3" y="3" width="18" height="18" rx="2" stroke-width="2"/>
-                                <path d="M3 12h18" stroke-width="2"/>
-                                <path d="M12 3v18" stroke-width="2"/>
-                            </svg>
-                        </div>
-                        <div>
-                            <h3 id="copy-feat1-title" contenteditable="true" class="font-bold text-gray-900">Subheadline</h3>
-                            <p id="copy-feat1-desc" contenteditable="true" class="text-sm text-gray-500 mt-1">
-                                Lorem ipsum dolor sit amet consectetur. Sodales convallis ullamcorper aenean eget blandit quis eget <span class="text-blue-600 underline">semper sociis</span>.
-                            </p>
-                        </div>
+                <!-- Email Item Layout -->
+                <div class="flex gap-3">
+                    <!-- Fake Avatar Icon -->
+                    <div class="w-10 h-10 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center text-xs shrink-0 shadow-sm shadow-blue-600/10">
+                        TG
                     </div>
-
-                    <!-- Feature 2 -->
-                    <div class="flex gap-4">
-                        <div class="placeholder-box shrink-0 w-12 h-12 rounded-lg flex items-center justify-center cursor-pointer" title="Click or drag image to upload icon">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="text-gray-400 opacity-40 svg-placeholder">
-                                <rect x="3" y="3" width="18" height="18" rx="2" stroke-width="2"/>
-                                <path d="M3 12h18" stroke-width="2"/>
-                                <path d="M12 3v18" stroke-width="2"/>
-                            </svg>
+                    <!-- Envelope Contents -->
+                    <div class="flex-grow min-w-0">
+                        <div class="flex justify-between items-baseline">
+                            <span class="font-bold text-slate-900 text-[14px]">Think with Google APAC</span>
+                            <span class="text-[11px] text-slate-400">12:20 PM</span>
                         </div>
-                        <div>
-                            <h3 id="copy-feat2-title" contenteditable="true" class="font-bold text-gray-900">Subheadline</h3>
-                            <p id="copy-feat2-desc" contenteditable="true" class="text-sm text-gray-500 mt-1">
-                                Lorem ipsum dolor sit amet consectetur. Sodales convallis ullamcorper aenean eget blandit quis eget <span class="text-blue-600 underline">semper sociis</span>.
-                            </p>
+                        
+                        <!-- Subject Line (Simulated) -->
+                        <div class="text-[13px] font-semibold text-slate-900 truncate flex items-center gap-1.5 mt-0.5">
+                            <span id="inboxSubject" class="text-slate-900 transition-all">Subject Line Placeholder</span>
                         </div>
-                    </div>
-
-                    <!-- Feature 3 -->
-                    <div class="flex gap-4">
-                        <div class="placeholder-box shrink-0 w-12 h-12 rounded-lg flex items-center justify-center cursor-pointer" title="Click or drag image to upload icon">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="text-gray-400 opacity-40 svg-placeholder">
-                                <rect x="3" y="3" width="18" height="18" rx="2" stroke-width="2"/>
-                                <path d="M3 12h18" stroke-width="2"/>
-                                <path d="M12 3v18" stroke-width="2"/>
-                            </svg>
-                        </div>
-                        <div>
-                            <h3 id="copy-feat3-title" contenteditable="true" class="font-bold text-gray-900">Subheadline</h3>
-                            <p id="copy-feat3-desc" contenteditable="true" class="text-sm text-gray-500 mt-1">
-                                Lorem ipsum dolor sit amet consectetur. Sodales convallis ullamcorper aenean eget blandit quis eget <span class="text-blue-600 underline">semper sociis</span>.
-                            </p>
+                        
+                        <!-- Preview Text (Simulated) -->
+                        <div class="text-[13px] text-slate-500 truncate mt-0.5">
+                            <span id="inboxPreviewText" class="text-slate-500 transition-all">Preview Text Placeholder next to subject line...</span>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <div class="mt-10 flex items-center justify-center gap-4">
-                    <span id="copy-feat-btn-primary" role="button" contenteditable="true" class="btn-primary">Default</span>
-                    <span id="copy-feat-btn-secondary" role="button" contenteditable="true" class="btn-secondary">Default</span>
+            <!-- Metadata Inline Editors -->
+            <div class="bg-slate-50/50 rounded-2xl p-4 border border-slate-100 grid grid-cols-1 gap-4">
+                <div class="relative group">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Subject Line</label>
+                    <div id="field_subject" contenteditable="true" data-name="Subject line" data-max="50" data-min="0" data-required="true" class="bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-800 focus:border-blue-500 transition-all block">Subject Line Placeholder</div>
                 </div>
-            </section>
-        </div>
+                <div class="relative group">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Preview Text</label>
+                    <div id="field_preview_text" contenteditable="true" data-name="Preview Text" data-max="150" data-min="0" data-required="false" class="bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-600 focus:border-blue-500 transition-all block">Preview Text Placeholder next to subject line...</div>
+                </div>
+            </div>
 
-        <!-- Component D: Final Callout Section -->
-        <div id="block-callout" class="commentable-block group/block">
-            <button onclick="openSectionComments('Conversion Callout Card', 'block-callout')" class="no-print absolute top-3 right-3 bg-slate-900/90 hover:bg-blue-600 text-white text-[10px] font-bold py-1 px-2.5 rounded-full shadow-md opacity-0 group-hover/block:opacity-100 transition-all duration-200 flex items-center gap-1.5 z-20">
-                <i class="fa-solid fa-message"></i> <span>Feedback</span>
-                <span id="badge-block-callout" class="bg-rose-500 text-white text-[9px] h-4 w-4 rounded-full flex items-center justify-center hidden">0</span>
-            </button>
+            <div class="border-t border-dashed border-slate-200 my-6"></div>
 
-            <section class="p-8">
-                <div class="bg-gray-50 rounded-3xl p-10 text-center border border-gray-100">
-                    <div class="placeholder-box w-12 h-12 mx-auto rounded-lg mb-6 flex items-center justify-center cursor-pointer" title="Click or drag image to upload icon">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="text-gray-400 opacity-40 svg-placeholder">
-                            <circle cx="12" cy="12" r="10" stroke-width="2"/>
-                            <path d="M12 8v8" stroke-width="2"/>
-                            <path d="M8 12h8" stroke-width="2"/>
+            <!-- Header Logo/Icon Area -->
+            <header class="pt-4 pb-2 px-4 text-center space-y-4">
+                <div class="relative mx-auto inline-block">
+                    <!-- Speech bubble badge for comments -->
+                    <button onclick="openComment('logo')" class="comment-badge hidden no-print absolute -top-2 -right-2 bg-amber-500 hover:bg-amber-600 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] shadow-md transition-all">
+                        <i class="fa-regular fa-comment"></i>
+                    </button>
+                    <!-- Logo container -->
+                    <div onclick="triggerImageUpload('logo-file')" class="placeholder-box w-24 h-8 rounded-lg flex items-center justify-center">
+                        <input type="file" id="logo-file" class="hidden" accept="image/*" onchange="handleImage(this, 'logo-img', 'logo-svg')">
+                        <img id="logo-img" class="hidden w-full h-full object-contain p-1" />
+                        <svg id="logo-svg" width="35" height="35" viewBox="0 0 100 100" class="text-slate-400 opacity-60">
+                            <circle cx="50" cy="50" r="24" fill="none" stroke="currentColor" stroke-width="2"/>
+                            <circle cx="38" cy="50" r="24" fill="none" stroke="currentColor" stroke-width="2"/>
+                            <circle cx="62" cy="50" r="24" fill="none" stroke="currentColor" stroke-width="2"/>
                         </svg>
                     </div>
-                    <h2 id="copy-callout-title" contenteditable="true" class="text-2xl font-bold text-gray-900 leading-tight">
-                        Lorem ipsum dolor sit amet consectetur
-                    </h2>
-                    <p id="copy-callout-body" contenteditable="true" class="mt-4 text-gray-500 text-sm leading-relaxed max-w-sm mx-auto">
-                        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Tincidunt lorem id lorem arcu, rhoncus nibh faucibus. Integer nulla gravida amet dolor tellus.
+                </div>
+
+                <!-- LOREM IPSUM Wayfinder / Preheader -->
+                <div class="relative group">
+                    <button onclick="openComment('preheader')" class="comment-badge hidden no-print absolute -top-1 -right-2 bg-amber-500 hover:bg-amber-600 text-white w-4 h-4 rounded-full flex items-center justify-center text-[8px] shadow-md transition-all">
+                        <i class="fa-regular fa-comment"></i>
+                    </button>
+                    <p id="field_wayfinder" contenteditable="true" data-name="Hero wayfinder" data-max="48" data-min="0" data-required="false" class="text-[11px] font-extrabold tracking-widest text-slate-400 uppercase text-center">LOREM IPSUM</p>
+                </div>
+
+                <!-- Eyebrow -->
+                <div class="relative group">
+                    <p id="field_eyebrow" contenteditable="true" data-name="Eyebrow" data-max="40" data-min="0" data-required="false" class="text-sm font-semibold text-slate-500 text-center">Max 40 characters (Optional)</p>
+                </div>
+
+                <!-- Hero Headline -->
+                <div class="relative group">
+                    <h1 class="text-2xl md:text-3xl font-extrabold leading-tight text-center tracking-tight text-slate-900 space-y-1">
+                        <span id="field_headline" contenteditable="true" data-name="Headline" data-max="40" data-min="16" data-required="true" class="block">Lorem ipsum dolor sit</span>
+                        <span id="field_headline_accent" contenteditable="true" data-name="Headline Accent" data-max="40" data-min="0" data-required="false" class="block text-blue-600">amet consectetur</span>
+                    </h1>
+                </div>
+
+                <!-- Hero Body Copy -->
+                <div class="relative group max-w-md mx-auto">
+                    <p id="field_description" contenteditable="true" data-name="Description" data-max="115" data-min="55" data-required="false" class="mt-4 text-slate-500 text-sm leading-relaxed text-center">
+                        Lorem ipsum dolor sit amet consectetur. Iaculis integer nisi amet et magnis in ac. Eget id urna nisi ultrices dui egestas vulputate. Viverra porta sit commodo lorem eu augue sed.
                     </p>
-                    <div class="mt-8">
-                        <span id="copy-callout-btn" role="button" contenteditable="true" class="btn-secondary px-10">Default</span>
+                </div>
+
+                <!-- Dual CTA Buttons -->
+                <div class="mt-6 flex flex-wrap items-center justify-center gap-4">
+                    <span id="btn_cta1" role="button" contenteditable="true" data-name="CTA 1" data-words="3" data-required="true" class="btn-pill">Default</span>
+                    <span id="btn_cta2" role="button" contenteditable="true" data-name="CTA 2" data-words="3" data-required="false" class="btn-pill-secondary">Default</span>
+                </div>
+
+                <!-- Disclaimer Text -->
+                <div class="relative group">
+                    <p id="field_disclaimer" contenteditable="true" data-name="Disclaimer" data-max="115" data-min="55" data-required="false" class="mt-4 text-[10px] text-slate-400 italic text-center">*disclaimer text lorem ipsum</p>
+                </div>
+            </header>
+
+            <!-- Hero Centered Image Media Block (Clover Shape representation) -->
+            <div class="px-2">
+                <div onclick="triggerImageUpload('hero-file')" class="placeholder-box w-full aspect-[16/9] rounded-3xl flex items-center justify-center relative shadow-sm">
+                    <input type="file" id="hero-file" class="hidden" accept="image/*" onchange="handleImage(this, 'hero-img', 'hero-svg')">
+                    <img id="hero-img" class="hidden w-full h-full object-cover" />
+                    <svg id="hero-svg" width="100" height="100" viewBox="0 0 100 100" class="text-slate-300 opacity-80">
+                        <circle cx="50" cy="50" r="32" fill="none" stroke="currentColor" stroke-width="1.5"/>
+                        <circle cx="34" cy="50" r="32" fill="none" stroke="currentColor" stroke-width="1.5"/>
+                        <circle cx="66" cy="50" r="32" fill="none" stroke="currentColor" stroke-width="1.5"/>
+                        <circle cx="50" cy="34" r="32" fill="none" stroke="currentColor" stroke-width="1.5"/>
+                        <circle cx="50" cy="66" r="32" fill="none" stroke="currentColor" stroke-width="1.5"/>
+                    </svg>
+                    <!-- Dimension Indicator -->
+                    <span class="absolute bottom-3 right-3 text-[9px] bg-slate-900/60 text-white font-mono px-2 py-1 rounded-full uppercase tracking-wider">Ratio 1:1 (Export 2x)</span>
+                </div>
+            </div>
+
+            <!-- Feature Stacks Section -->
+            <section class="px-4 py-6 space-y-8">
+                <h2 id="field_feature_title" contenteditable="true" data-name="Feature Title" data-max="65" data-min="10" data-required="true" class="text-xl font-bold text-center text-slate-900">Headline goes here</h2>
+                
+                <div class="space-y-6 max-w-md mx-auto">
+                    <!-- Feature #1 -->
+                    <div class="flex gap-4 items-start relative group">
+                        <div onclick="triggerImageUpload('ft1-file')" class="placeholder-box shrink-0 w-12 h-12 rounded-xl flex items-center justify-center shadow-sm">
+                            <input type="file" id="ft1-file" class="hidden" accept="image/*" onchange="handleImage(this, 'ft1-img', 'ft1-svg')">
+                            <img id="ft1-img" class="hidden w-full h-full object-cover" />
+                            <svg id="ft1-svg" width="22" height="22" viewBox="0 0 100 100" class="text-slate-400 opacity-60">
+                                <circle cx="50" cy="50" r="30" fill="none" stroke="currentColor" stroke-width="2"/>
+                                <circle cx="35" cy="50" r="30" fill="none" stroke="currentColor" stroke-width="2"/>
+                                <circle cx="65" cy="50" r="30" fill="none" stroke="currentColor" stroke-width="2"/>
+                            </svg>
+                        </div>
+                        <div class="flex-grow space-y-1">
+                            <h3 id="field_ft1_title" contenteditable="true" data-name="Title #1" data-max="65" data-min="10" data-required="true" class="font-bold text-slate-900 text-sm">Subheadline</h3>
+                            <p id="field_ft1_desc" contenteditable="true" data-name="Data #1" data-max="95" data-min="10" data-required="false" class="text-xs text-slate-500 leading-relaxed">
+                                Lorem ipsum dolor sit amet consectetur. Sodales convallis ullamcorper aenean eget blandit quis eget <span class="text-blue-600 underline">semper sociis</span>.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Feature #2 -->
+                    <div class="flex gap-4 items-start relative group">
+                        <div onclick="triggerImageUpload('ft2-file')" class="placeholder-box shrink-0 w-12 h-12 rounded-xl flex items-center justify-center shadow-sm">
+                            <input type="file" id="ft2-file" class="hidden" accept="image/*" onchange="handleImage(this, 'ft2-img', 'ft2-svg')">
+                            <img id="ft2-img" class="hidden w-full h-full object-cover" />
+                            <svg id="ft2-svg" width="22" height="22" viewBox="0 0 100 100" class="text-slate-400 opacity-60">
+                                <circle cx="50" cy="50" r="30" fill="none" stroke="currentColor" stroke-width="2"/>
+                                <circle cx="35" cy="50" r="30" fill="none" stroke="currentColor" stroke-width="2"/>
+                                <circle cx="65" cy="50" r="30" fill="none" stroke="currentColor" stroke-width="2"/>
+                            </svg>
+                        </div>
+                        <div class="flex-grow space-y-1">
+                            <h3 id="field_ft2_title" contenteditable="true" data-name="Title #2" data-max="65" data-min="10" data-required="true" class="font-bold text-slate-900 text-sm">Subheadline</h3>
+                            <p id="field_ft2_desc" contenteditable="true" data-name="Data #2" data-max="95" data-min="10" data-required="false" class="text-xs text-slate-500 leading-relaxed">
+                                Lorem ipsum dolor sit amet consectetur. Sodales convallis ullamcorper aenean eget blandit quis eget <span class="text-blue-600 underline">semper sociis</span>.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Feature #3 -->
+                    <div class="flex gap-4 items-start relative group">
+                        <div onclick="triggerImageUpload('ft3-file')" class="placeholder-box shrink-0 w-12 h-12 rounded-xl flex items-center justify-center shadow-sm">
+                            <input type="file" id="ft3-file" class="hidden" accept="image/*" onchange="handleImage(this, 'ft3-img', 'ft3-svg')">
+                            <img id="ft3-img" class="hidden w-full h-full object-cover" />
+                            <svg id="ft3-svg" width="22" height="22" viewBox="0 0 100 100" class="text-slate-400 opacity-60">
+                                <circle cx="50" cy="50" r="30" fill="none" stroke="currentColor" stroke-width="2"/>
+                                <circle cx="35" cy="50" r="30" fill="none" stroke="currentColor" stroke-width="2"/>
+                                <circle cx="65" cy="50" r="30" fill="none" stroke="currentColor" stroke-width="2"/>
+                            </svg>
+                        </div>
+                        <div class="flex-grow space-y-1">
+                            <h3 id="field_ft3_title" contenteditable="true" data-name="Title #3" data-max="65" data-min="10" data-required="true" class="font-bold text-slate-900 text-sm">Subheadline</h3>
+                            <p id="field_ft3_desc" contenteditable="true" data-name="Data #3" data-max="95" data-min="10" data-required="false" class="text-xs text-slate-500 leading-relaxed">
+                                Lorem ipsum dolor sit amet consectetur. Sodales convallis ullamcorper aenean eget blandit quis eget <span class="text-blue-600 underline">semper sociis</span>.
+                            </p>
+                        </div>
                     </div>
                 </div>
             </section>
-        </div>
 
-        <footer class="pb-8 pt-4"></footer>
+            <!-- Bottom Conversional Card Section (Closer) -->
+            <section class="p-4 pt-8">
+                <div class="bg-slate-50/50 rounded-3xl p-6 text-center border border-slate-100 flex flex-col items-center space-y-4">
+                    <!-- Closer Icon -->
+                    <div onclick="triggerImageUpload('closer-file')" class="placeholder-box w-12 h-12 rounded-xl flex items-center justify-center shadow-sm">
+                        <input type="file" id="closer-file" class="hidden" accept="image/*" onchange="handleImage(this, 'closer-img', 'closer-svg')">
+                        <img id="closer-img" class="hidden w-full h-full object-cover" />
+                        <svg id="closer-svg" width="24" height="24" viewBox="0 0 100 100" class="text-slate-400 opacity-60">
+                            <circle cx="50" cy="50" r="30" fill="none" stroke="currentColor" stroke-width="2"/>
+                            <circle cx="35" cy="50" r="30" fill="none" stroke="currentColor" stroke-width="2"/>
+                            <circle cx="65" cy="50" r="30" fill="none" stroke="currentColor" stroke-width="2"/>
+                        </svg>
+                    </div>
+
+                    <!-- Closer Subheadline -->
+                    <h2 id="field_closer_sub" contenteditable="true" data-name="Subheadline" data-max="60" data-min="16" data-required="true" class="text-lg font-extrabold text-slate-900 max-w-sm">
+                        Lorem ipsum dolor sit amet consectetur
+                    </h2>
+
+                    <!-- Closer Body Copy -->
+                    <p id="field_closer_desc" contenteditable="true" data-name="Description" data-max="200" data-min="55" data-required="false" class="text-xs text-slate-500 leading-relaxed max-w-sm">
+                        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Tincidunt lorem id lorem arcu, rhoncus nibh faucibus. Integer nulla gravida amet dolor tellus.
+                    </p>
+
+                    <!-- Closer CTA Button -->
+                    <div class="pt-2">
+                        <span id="btn_closer_cta" role="button" contenteditable="true" data-name="CTA" data-words="3" data-required="true" class="btn-pill-secondary border-blue-500/30 px-8 py-2 text-sm">Default</span>
+                    </div>
+                </div>
+            </section>
+
+        </div>
     </div>
 
-    <!-- Slide-out Comment Sidebar (Non-printable) -->
-    <div id="commentSidebar" class="no-print fixed top-0 right-0 h-full w-80 bg-slate-900 text-white shadow-2xl border-l border-slate-800 flex flex-col translate-x-full transition-transform duration-300 z-40">
-        <!-- Sidebar Header -->
-        <div class="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-950">
-            <div class="flex items-center gap-2">
-                <i class="fa-solid fa-comments text-blue-400"></i>
-                <h3 class="font-bold text-sm">Review & Feedback</h3>
-            </div>
-            <button onclick="toggleCommentsSidebar()" class="text-slate-400 hover:text-white p-1">
-                <i class="fa-solid fa-xmark text-lg"></i>
+    <!-- Floating Comment Sidebar Panel (Non-Printable) -->
+    <aside id="commentSidebar" class="no-print fixed top-0 right-0 h-full w-[350px] bg-white border-l border-slate-200 shadow-2xl z-50 flex flex-col translate-x-full transition-transform duration-300">
+        <div class="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+            <span class="text-xs font-bold text-slate-800 flex items-center gap-2">
+                <i class="fa-solid fa-comments text-blue-500"></i> Section Feedback Comments
+            </span>
+            <button onclick="toggleComments()" class="text-slate-400 hover:text-slate-600 text-sm p-1">
+                <i class="fa-solid fa-xmark"></i>
             </button>
         </div>
-
-        <!-- Comments List Area -->
-        <div id="commentsContainer" class="flex-grow p-4 overflow-y-auto space-y-3 bg-slate-900/45">
-            <!-- Dynamic Comment Nodes Rendered Here -->
-            <div id="noCommentsMessage" class="text-center py-8 text-slate-500 text-xs">
-                <i class="fa-regular fa-comment-dots text-2xl block mb-2 opacity-50"></i>
-                No comments on this draft yet.<br>Click any element's "Feedback" button to pin a note.
-            </div>
+        
+        <!-- Live Comment Thread List -->
+        <div id="commentsList" class="flex-grow p-4 overflow-y-auto space-y-4 text-xs">
+            <!-- Dynamically populated comments appear here -->
+            <p class="text-slate-400 text-center py-8">No comments left yet. Click speech bubbles next to components to tag feedback!</p>
         </div>
 
-        <!-- Add Comment Form -->
-        <div class="p-4 border-t border-slate-800 bg-slate-950 space-y-3">
-            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Add Your Feedback</span>
-            
-            <input type="text" id="commentAuthor" placeholder="Your Name / Role (e.g. Client, PM)" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none">
-            
-            <select id="commentSection" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-2 py-1.5 text-xs text-slate-300 focus:border-blue-500 focus:outline-none">
-                <option value="General">General / Page Wide</option>
-                <option value="Hero Component" data-target="block-hero">Hero Component</option>
-                <option value="Main Graphic Block" data-target="block-graphic">Main Graphic Block</option>
-                <option value="Features Row Segment" data-target="block-features">Features Row Segment</option>
-                <option value="Conversion Callout Card" data-target="block-callout">Conversion Callout Card</option>
-            </select>
-            
-            <textarea id="commentText" placeholder="Write suggestion or copy tweak..." rows="3" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none"></textarea>
-            
-            <button onclick="addNewComment()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 rounded-lg text-xs transition-all flex items-center justify-center gap-1.5">
-                <i class="fa-solid fa-paper-plane text-[10px]"></i> Post Comment
+        <!-- Inline Comment Composer Area -->
+        <div class="p-4 border-t border-slate-100 space-y-2">
+            <span id="activeContextTag" class="text-[10px] font-bold text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full uppercase inline-block">Reviewing: General Page</span>
+            <input type="text" id="reviewerName" placeholder="Your Name" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs focus:bg-white focus:border-blue-500 outline-none">
+            <textarea id="commentBody" placeholder="Leave structural or copy change requests..." rows="3" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-xs focus:bg-white focus:border-blue-500 outline-none"></textarea>
+            <button onclick="addComment()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-lg text-xs transition-all">
+                Post Comment
             </button>
         </div>
-    </div>
-
-    <!-- PDF Export Guidance Modal (Non-printable) -->
-    <div id="printModal" class="no-print fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-gray-100 text-left text-gray-900">
-            <div class="flex items-start gap-3.5 mb-4">
-                <div class="bg-blue-50 text-blue-600 p-3 rounded-xl shrink-0">
-                    <i class="fa-solid fa-file-pdf text-xl"></i>
-                </div>
-                <div>
-                    <h3 class="text-base font-bold text-gray-900">Exporting to PDF</h3>
-                    <p class="text-xs text-gray-500 mt-0.5">Due to browser restrictions inside interactive preview windows, direct printing may be sandboxed.</p>
-                </div>
-            </div>
-            
-            <div class="space-y-3 my-4 text-xs text-gray-700">
-                <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-100">
-                    <strong class="text-slate-900 block mb-1">Option A: Attempt Direct Print</strong>
-                    <p class="text-[11px] text-gray-500 mb-2">Try triggering your browser's system printer layout directly right now.</p>
-                    <button onclick="triggerDirectPrint()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2 px-4 rounded-lg transition-all text-[11px]">
-                        Open System Print Dialog
-                    </button>
-                </div>
-                <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-100">
-                    <strong class="text-slate-900 block mb-1">Option B: Use Browser Window (Recommended)</strong>
-                    <ol class="list-decimal list-inside space-y-1.5 text-gray-600 mt-1.5 leading-normal">
-                        <li>Copy the workspace template code from the editor box.</li>
-                        <li>Save it to an <code class="bg-slate-200 px-1 py-0.5 rounded text-rose-600 font-mono text-[10px]">index.html</code> file.</li>
-                        <li>Open that file directly in Google Chrome.</li>
-                        <li>Press <kbd class="bg-slate-200 px-1 py-0.5 rounded font-mono text-slate-800 text-[10px] border border-slate-300">Ctrl + P</kbd> / <kbd class="bg-slate-200 px-1 py-0.5 rounded font-mono text-slate-800 text-[10px] border border-slate-300">Cmd + P</kbd> to save perfect PDFs.</li>
-                    </ol>
-                </div>
-            </div>
-
-            <div class="flex justify-end gap-2 pt-2 border-t border-gray-100 mt-4">
-                <button onclick="closePrintModal()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold px-4 py-2 rounded-lg text-xs transition-all">
-                    Dismiss
-                </button>
-            </div>
-        </div>
-    </div>
+    </aside>
 
     <script>
-        // Store default layout values for instant soft-resetting
-        const defaults = {};
-        let activeComments = [];
-        let currentlyHighlightedBlock = null;
+        let comments = [];
+        let activeComponentContext = 'general';
+        let showCommentsSidebar = false;
 
-        document.addEventListener('DOMContentLoaded', () => {
-            // Save initial defaults
-            document.querySelectorAll('[contenteditable="true"]').forEach(el => {
-                defaults[el.id] = el.innerHTML;
-            });
+        // Initialize Workspace Bindings
+        window.onload = function() {
+            setupSpecTrackers();
+            syncInboxPreviews();
+            loadStateFromURL();
+        };
 
-            // Read state from URL if present
-            loadStateFromUrl();
+        // Real-Time character count / input boundary feedback
+        function setupSpecTrackers() {
+            const specElements = document.querySelectorAll('[contenteditable="true"]');
+            const bubble = document.getElementById('specBubble');
 
-            // Setup image uploads
-            document.querySelectorAll('.placeholder-box').forEach(box => {
-                box.addEventListener('click', (e) => {
-                    if (e.target.tagName === 'INPUT') return;
-                    const fileInput = document.createElement('input');
-                    fileInput.type = 'file';
-                    fileInput.accept = 'image/*';
-                    fileInput.className = 'hidden';
-                    
-                    fileInput.addEventListener('change', (event) => {
-                        const file = event.target.files[0];
-                        if (file) handleImageUpload(file, box);
-                    });
-                    
-                    document.body.appendChild(fileInput);
-                    fileInput.click();
-                    setTimeout(() => fileInput.remove(), 60000);
-                });
+            specElements.forEach(el => {
+                // Focus: open specific tooltip bubble
+                el.addEventListener('focus', function(e) {
+                    const name = el.getAttribute('data-name');
+                    const max = el.getAttribute('data-max');
+                    const min = el.getAttribute('data-min');
+                    const words = el.getAttribute('data-words');
 
-                box.addEventListener('dragover', (e) => {
-                    e.preventDefault();
-                    box.classList.add('border-blue-500', 'bg-blue-50');
-                });
-
-                box.addEventListener('dragleave', () => {
-                    box.classList.remove('border-blue-500', 'bg-blue-50');
-                });
-
-                box.addEventListener('drop', (e) => {
-                    e.preventDefault();
-                    box.classList.remove('border-blue-500', 'bg-blue-50');
-                    const file = e.dataTransfer.files[0];
-                    if (file && file.type.startsWith('image/')) {
-                        handleImageUpload(file, box);
+                    if (name) {
+                        document.getElementById('specName').innerText = name;
+                        
+                        if (words) {
+                            document.getElementById('specRules').innerText = `Max Word Count: ${words}`;
+                        } else {
+                            document.getElementById('specRules').innerText = `Min ${min}, Max ${max} Chars`;
+                        }
+                        
+                        updateCounter(el);
+                        
+                        // Reposition floating bubble relative to item
+                        const rect = el.getBoundingClientRect();
+                        bubble.style.top = `${rect.top + window.scrollY - bubble.offsetHeight - 10}px`;
+                        bubble.style.left = `${rect.left + window.scrollX + (rect.width/2)}px`;
+                        bubble.classList.remove('hidden');
                     }
                 });
+
+                // Keypress: update count real-time and handle limits
+                el.addEventListener('input', function() {
+                    updateCounter(el);
+                    syncInboxPreviews();
+                });
+
+                el.addEventListener('blur', function() {
+                    bubble.classList.add('hidden');
+                });
             });
-        });
-
-        function handleImageUpload(file, targetBox) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                targetBox.innerHTML = '';
-                const img = document.createElement('img');
-                img.src = e.target.result;
-                img.className = 'w-full h-full object-cover rounded-inherit pointer-events-none';
-                
-                // Keep logos or icons contained properly without stretching
-                if (targetBox.id === 'placeholder-logo' || targetBox.classList.contains('w-12')) {
-                    img.className = 'w-full h-full object-contain rounded-inherit pointer-events-none';
-                }
-
-                targetBox.appendChild(img);
-                targetBox.style.backgroundImage = 'none';
-                targetBox.style.backgroundColor = 'transparent';
-                targetBox.style.borderStyle = 'none';
-                showToast("Success", "Graphic updated successfully!", "success");
-            };
-            reader.readAsDataURL(file);
         }
 
-        // SERIALIZE STATE TO URL
-        function saveStateToUrl() {
-            const state = {
-                text: {},
-                comments: activeComments
-            };
-            
-            document.querySelectorAll('[contenteditable="true"]').forEach(el => {
-                if (el.id) {
-                    state.text[el.id] = el.innerHTML;
+        // Live Subject / Preview text simulation
+        function syncInboxPreviews() {
+            const subjectVal = document.getElementById('field_subject').innerText;
+            const previewVal = document.getElementById('field_preview_text').innerText;
+
+            document.getElementById('inboxSubject').innerText = subjectVal || 'Subject Line Placeholder';
+            document.getElementById('inboxPreviewText').innerText = previewVal || 'Preview Text Placeholder next to subject line...';
+        }
+
+        // Handle Image trigger and uploads
+        function triggerImageUpload(id) {
+            document.getElementById(id).click();
+        }
+
+        function handleImage(input, imgId, svgId) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = document.getElementById(imgId);
+                    img.src = e.target.result;
+                    img.classList.remove('hidden');
+                    document.getElementById(svgId).classList.add('hidden');
                 }
-            });
-            
-            // Safe base64 encoding to support special characters
-            const jsonString = JSON.stringify(state);
-            const base64 = btoa(encodeURIComponent(jsonString).replace(/%([0-9A-F]{2})/g, (match, p1) => {
-                return String.fromCharCode('0x' + p1);
-            }));
-            
-            const shareUrl = window.location.origin + window.location.pathname + '#option=' + base64;
-            
-            // Traditional clipboard command to guarantee execution in standard browsers
-            const textarea = document.createElement('textarea');
-            textarea.value = shareUrl;
-            document.body.appendChild(textarea);
-            textarea.select();
-            
-            try {
-                document.execCommand('copy');
-                showToast("Link Copied!", "A unique layout & feedback link has been copied to your clipboard. Send this to stakeholders!", "success");
-            } catch (err) {
-                console.error("Failed to copy link: ", err);
-                showToast("Error", "Could not copy link automatically.", "error");
+                reader.readAsDataURL(input.files[0]);
             }
-            document.body.removeChild(textarea);
         }
 
-        // DESERIALIZE STATE FROM URL
-        function loadStateFromUrl() {
-            const hash = window.location.hash;
-            if (hash.startsWith('#option=')) {
-                try {
-                    const base64 = hash.substring(8);
-                    const decodedStr = decodeURIComponent(atob(base64).split('').map(c => {
-                        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-                    }).join(''));
-                    
-                    const state = JSON.parse(decodedStr);
-                    
-                    // Render editable copy texts
-                    if (state.text) {
-                        Object.keys(state.text).forEach(id => {
-                            const el = document.getElementById(id);
-                            if (el) {
-                                el.innerHTML = state.text[id];
-                            }
-                        });
-                    }
+        // Live boundary count checkers
+        function updateCounter(el) {
+            const length = el.innerText.trim().length;
+            const max = el.getAttribute('data-max');
+            const min = el.getAttribute('data-min');
+            const words = el.getAttribute('data-words');
+            const counter = document.getElementById('specCounter');
 
-                    // Populate feedback comments
-                    if (state.comments) {
-                        activeComments = state.comments;
-                        renderComments();
-                    }
-                } catch (e) {
-                    console.error("Could not parse layout configurations", e);
+            if (words) {
+                const wordCount = el.innerText.trim().split(/\s+/).filter(w => w.length).length;
+                counter.innerText = `${wordCount}/${words} words`;
+                if (wordCount > words) {
+                    counter.className = "bg-red-500 text-white px-1.5 py-0.5 rounded text-[11px] font-mono font-bold animate-pulse";
+                    el.classList.add('border-red-300', 'bg-red-50/20');
+                } else {
+                    counter.className = "bg-emerald-500 text-white px-1.5 py-0.5 rounded text-[11px] font-mono font-bold";
+                    el.classList.remove('border-red-300', 'bg-red-50/20');
+                }
+            } else if (max) {
+                counter.innerText = `${length}/${max} chars`;
+                const intMin = parseInt(min) || 0;
+                const intMax = parseInt(max);
+
+                if (length > intMax || length < intMin) {
+                    counter.className = "bg-red-500 text-white px-1.5 py-0.5 rounded text-[11px] font-mono font-bold animate-pulse";
+                    el.classList.add('border-red-300', 'bg-red-50/20');
+                } else {
+                    counter.className = "bg-emerald-500 text-white px-1.5 py-0.5 rounded text-[11px] font-mono font-bold";
+                    el.classList.remove('border-red-300', 'bg-red-50/20');
                 }
             }
         }
 
-        function resetToDefaults() {
-            if (confirm("Are you sure you want to revert all text back to mockup defaults? This won't delete comments.")) {
-                Object.keys(defaults).forEach(id => {
-                    const el = document.getElementById(id);
-                    if (el) el.innerHTML = defaults[id];
-                });
-                window.location.hash = '';
-                showToast("Reset Done", "Default copy layout restored.", "info");
-            }
-        }
-
-        // COMMENT PANEL SIDEBAR INTERACTIONS
-        function toggleCommentsSidebar() {
+        // Toggle commenting workflows
+        function toggleComments() {
             const sidebar = document.getElementById('commentSidebar');
-            sidebar.classList.toggle('translate-x-full');
-        }
+            const toggler = document.getElementById('commentToggleBtn');
+            const badges = document.querySelectorAll('.comment-badge');
+            
+            showCommentsSidebar = !showCommentsSidebar;
 
-        function openSectionComments(sectionName, elementId) {
-            // Highlight target block
-            if (currentlyHighlightedBlock) {
-                document.getElementById(currentlyHighlightedBlock).classList.remove('has-active-comment');
+            if (showCommentsSidebar) {
+                sidebar.classList.remove('translate-x-full');
+                toggler.className = "bg-amber-100 hover:bg-amber-200 text-amber-700 text-xs px-3.5 py-2 rounded-lg font-bold flex items-center gap-2 transition-all border border-amber-300";
+                badges.forEach(b => b.classList.remove('hidden'));
+            } else {
+                sidebar.classList.add('translate-x-full');
+                toggler.className = "bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs px-3.5 py-2 rounded-lg font-semibold flex items-center gap-2 transition-all";
+                badges.forEach(b => b.classList.add('hidden'));
             }
-            currentlyHighlightedBlock = elementId;
-            document.getElementById(elementId).classList.add('has-active-comment');
-
-            // Set drop-down target on input
-            const selectEl = document.getElementById('commentSection');
-            selectEl.value = sectionName;
-
-            // Ensure Sidebar is open
-            const sidebar = document.getElementById('commentSidebar');
-            sidebar.classList.remove('translate-x-full');
         }
 
-        function addNewComment() {
-            const authorInput = document.getElementById('commentAuthor');
-            const sectionSelect = document.getElementById('commentSection');
-            const textInput = document.getElementById('commentText');
-
-            const author = authorInput.value.trim() || "Anonymous Reviewer";
-            const section = sectionSelect.value;
-            const text = textInput.value.trim();
-
-            if (!text) {
-                showToast("Empty Feedback", "Please type a comment before posting.", "error");
-                return;
-            }
-
-            // Get target ID linking to layout component
-            const selectedOption = sectionSelect.options[sectionSelect.selectedIndex];
-            const targetBlock = selectedOption.getAttribute('data-target') || '';
-
-            const newComment = {
-                id: 'comment-' + Date.now(),
-                author: author,
-                section: section,
-                targetBlock: targetBlock,
-                text: text,
-                timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-            };
-
-            activeComments.push(newComment);
-            renderComments();
-
-            // Reset inputs
-            textInput.value = '';
-            showToast("Feedback Saved", "Comment added to the draft! Don't forget to 'Get Share Link' to save it permanently.", "success");
+        function openComment(context) {
+            activeComponentContext = context;
+            document.getElementById('activeContextTag').innerText = `Reviewing: ${context}`;
+            if (!showCommentsSidebar) toggleComments();
+            document.getElementById('commentBody').focus();
         }
 
-        function deleteComment(commentId) {
-            activeComments = activeComments.filter(c => c.id !== commentId);
+        function addComment() {
+            const name = document.getElementById('reviewerName').value || 'Anonymous Reviewer';
+            const body = document.getElementById('commentBody').value;
+
+            if (!body) return;
+
+            comments.push({
+                context: activeComponentContext,
+                author: name,
+                text: body,
+                date: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+            });
+
+            document.getElementById('commentBody').value = '';
             renderComments();
-            showToast("Comment Removed", "Feedback note deleted.", "info");
         }
 
         function renderComments() {
-            const container = document.getElementById('commentsContainer');
-            const emptyMessage = document.getElementById('noCommentsMessage');
-            
-            // Reset individual feedback counts on blocks
-            document.querySelectorAll('[id^="badge-block"]').forEach(badge => {
-                badge.innerText = "0";
-                badge.classList.add('hidden');
-            });
-
-            // Clean previous list
-            const currentItems = container.querySelectorAll('.comment-item');
-            currentItems.forEach(el => el.remove());
-
-            if (activeComments.length === 0) {
-                emptyMessage.classList.remove('hidden');
-                document.getElementById('globalCommentCountBadge').classList.add('hidden');
+            const container = document.getElementById('commentsList');
+            if (comments.length === 0) {
+                container.innerHTML = `<p class="text-slate-400 text-center py-8">No comments left yet. Click speech bubbles next to components to tag feedback!</p>`;
                 return;
             }
 
-            emptyMessage.classList.add('hidden');
-            
-            // Show global comment tally
-            const globalBadge = document.getElementById('globalCommentCountBadge');
-            globalBadge.innerText = activeComments.length;
-            globalBadge.classList.remove('hidden');
-
-            // Count mapping for pinpoint block markers
-            const counts = {};
-
-            activeComments.forEach(comment => {
-                // Update component badges
-                if (comment.targetBlock) {
-                    counts[comment.targetBlock] = (counts[comment.targetBlock] || 0) + 1;
-                }
-
-                // Append comment component to sidebar list
-                const commentDiv = document.createElement('div');
-                commentDiv.className = 'comment-item bg-slate-800 p-3.5 rounded-xl border border-slate-700/60 flex flex-col gap-1 text-xs relative group';
-                commentDiv.innerHTML = `
+            container.innerHTML = comments.map(c => `
+                <div class="bg-slate-50 border border-slate-200/60 rounded-xl p-3 space-y-1.5 shadow-sm">
                     <div class="flex items-center justify-between">
-                        <span class="font-bold text-slate-200">${escapeHTML(comment.author)}</span>
-                        <span class="text-[9px] text-slate-500 font-mono">${comment.timestamp}</span>
+                        <span class="font-extrabold text-slate-800">${escapeHTML(c.author)}</span>
+                        <span class="text-[9px] bg-slate-200/80 text-slate-500 px-1.5 py-0.5 rounded font-mono">${c.date}</span>
                     </div>
-                    <span class="text-[9px] font-bold text-blue-400 uppercase tracking-wider block mt-0.5">${comment.section}</span>
-                    <p class="text-slate-300 mt-1 leading-normal">${escapeHTML(comment.text)}</p>
-                    <button onclick="deleteComment('${comment.id}')" class="absolute top-2 right-2 text-slate-500 hover:text-rose-400 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <i class="fa-solid fa-trash-can text-[11px]"></i>
-                    </button>
-                `;
-                container.appendChild(commentDiv);
-            });
-
-            // Render updated indicators visually on layout sections
-            Object.keys(counts).forEach(blockId => {
-                const badge = document.getElementById('badge-' + blockId);
-                if (badge) {
-                    badge.innerText = counts[blockId];
-                    badge.classList.remove('hidden');
-                }
-            });
+                    <span class="text-[9px] font-bold text-amber-600 bg-amber-50 border border-amber-200/50 px-2 py-0.5 rounded-full uppercase tracking-wider block w-fit">
+                        ${escapeHTML(c.context)}
+                    </span>
+                    <p class="text-slate-600 leading-normal">${escapeHTML(c.text)}</p>
+                </div>
+            `).join('');
         }
 
         function escapeHTML(str) {
@@ -690,46 +571,80 @@
             );
         }
 
-        function showToast(title, message, type) {
-            const toast = document.getElementById('toastNotification');
-            const iconContainer = document.getElementById('toastIcon');
-            const msgEl = document.getElementById('toastMessage');
+        // State packaging to Share Links (Offline query-state)
+        function generateShareLink() {
+            const state = {
+                subject: document.getElementById('field_subject').innerText,
+                preview: document.getElementById('field_preview_text').innerText,
+                wayfinder: document.getElementById('field_wayfinder').innerText,
+                eyebrow: document.getElementById('field_eyebrow').innerText,
+                headline: document.getElementById('field_headline').innerText,
+                headline_accent: document.getElementById('field_headline_accent').innerText,
+                description: document.getElementById('field_description').innerText,
+                disclaimer: document.getElementById('field_disclaimer').innerText,
+                closer_sub: document.getElementById('field_closer_sub').innerText,
+                closer_desc: document.getElementById('field_closer_desc').innerText,
+                features: {
+                    title: document.getElementById('field_feature_title').innerText,
+                    f1_title: document.getElementById('field_ft1_title').innerText,
+                    f1_desc: document.getElementById('field_ft1_desc').innerText,
+                    f2_title: document.getElementById('field_ft2_title').innerText,
+                    f2_desc: document.getElementById('field_ft2_desc').innerText,
+                    f3_title: document.getElementById('field_ft3_title').innerText,
+                    f3_desc: document.getElementById('field_ft3_desc').innerText,
+                },
+                comments: comments
+            };
 
-            msgEl.innerHTML = `<strong class="block text-white">${title}</strong>${message}`;
+            const hash = btoa(unescape(encodeURIComponent(JSON.stringify(state))));
+            const shareUrl = `${window.location.origin}${window.location.pathname}#state=${hash}`;
             
-            // Style icons according to alert severity
-            if (type === 'success') {
-                iconContainer.className = "bg-emerald-500/20 text-emerald-400 p-1.5 rounded-lg";
-                iconContainer.innerHTML = '<i class="fa-solid fa-circle-check"></i>';
-            } else if (type === 'error') {
-                iconContainer.className = "bg-rose-500/20 text-rose-400 p-1.5 rounded-lg";
-                iconContainer.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>';
-            } else {
-                iconContainer.className = "bg-blue-500/20 text-blue-400 p-1.5 rounded-lg";
-                iconContainer.innerHTML = '<i class="fa-solid fa-circle-info"></i>';
+            const dummy = document.createElement('textarea');
+            document.body.appendChild(dummy);
+            dummy.value = shareUrl;
+            dummy.select();
+            document.execCommand('copy');
+            document.body.removeChild(dummy);
+
+            alert('Your interactive share URL with all modified copy and comment feedback has been successfully copied to your clipboard!');
+        }
+
+        function loadStateFromURL() {
+            const hash = window.location.hash;
+            if (!hash || !hash.startsWith('#state=')) return;
+
+            try {
+                const rawJson = decodeURIComponent(escape(atob(hash.substring(7))));
+                const state = JSON.parse(rawJson);
+
+                if (state.subject) document.getElementById('field_subject').innerText = state.subject;
+                if (state.preview) document.getElementById('field_preview_text').innerText = state.preview;
+                if (state.wayfinder) document.getElementById('field_wayfinder').innerText = state.wayfinder;
+                if (state.eyebrow) document.getElementById('field_eyebrow').innerText = state.eyebrow;
+                if (state.headline) document.getElementById('field_headline').innerText = state.headline;
+                if (state.headline_accent) document.getElementById('field_headline_accent').innerText = state.headline_accent;
+                if (state.description) document.getElementById('field_description').innerText = state.description;
+                if (state.disclaimer) document.getElementById('field_disclaimer').innerText = state.disclaimer;
+                if (state.closer_sub) document.getElementById('field_closer_sub').innerText = state.closer_sub;
+                if (state.closer_desc) document.getElementById('field_closer_desc').innerText = state.closer_desc;
+                if (state.features) {
+                    if (state.features.title) document.getElementById('field_feature_title').innerText = state.features.title;
+                    if (state.features.f1_title) document.getElementById('field_ft1_title').innerText = state.features.f1_title;
+                    if (state.features.f1_desc) document.getElementById('field_ft1_desc').innerText = state.features.f1_desc;
+                    if (state.features.f2_title) document.getElementById('field_ft2_title').innerText = state.features.f2_title;
+                    if (state.features.f2_desc) document.getElementById('field_ft2_desc').innerText = state.features.f2_desc;
+                    if (state.features.f3_title) document.getElementById('field_ft3_title').innerText = state.features.f3_title;
+                    if (state.features.f3_desc) document.getElementById('field_ft3_desc').innerText = state.features.f3_desc;
+                }
+                if (state.comments) {
+                    comments = state.comments;
+                    renderComments();
+                }
+
+                syncInboxPreviews();
+            } catch (err) {
+                console.error('Failed to unpack shared state:', err);
             }
-
-            toast.classList.remove('translate-y-20', 'opacity-0');
-            
-            setTimeout(() => {
-                toast.classList.add('translate-y-20', 'opacity-0');
-            }, 5000);
-        }
-
-        // PDF MODAL INTERACTION FUNCTIONS
-        function openPrintModal() {
-            document.getElementById('printModal').classList.remove('hidden');
-        }
-
-        function closePrintModal() {
-            document.getElementById('printModal').classList.add('hidden');
-        }
-
-        function triggerDirectPrint() {
-            closePrintModal();
-            setTimeout(() => {
-                window.print();
-            }, 350);
         }
     </script>
 </body>
