@@ -13,6 +13,7 @@
             font-family: 'Inter', sans-serif;
             background-color: #f1f5f9;
             color: #0f172a;
+            transition: background-color 0.3s;
         }
 
         /* SF Pro style for iPhone inbox preview simulator */
@@ -102,23 +103,20 @@
 </head>
 <body class="p-4 md:p-8 flex flex-col items-center">
 
-    <!-- Custom Alert Toast Notification -->
-    <div id="toastNotification" class="fixed top-5 right-5 z-50 transform translate-y-[-100px] opacity-0 transition-all duration-300 bg-emerald-600 text-white px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3">
-        <i class="fa-solid fa-circle-check text-lg"></i>
-        <div>
-            <p class="font-bold text-xs">Link Copied Successfully!</p>
-            <p class="text-[10px] opacity-90">All copy variations and button layouts are saved inside your link.</p>
-        </div>
+    <!-- Custom Sliding Auto-Save Notification Toast -->
+    <div id="toastNotification" class="no-print fixed top-5 left-1/2 -translate-x-1/2 -translate-y-24 bg-slate-900/95 text-white text-xs px-5 py-3 rounded-full shadow-2xl z-50 flex items-center gap-3 transition-all duration-500 border border-slate-700/50 backdrop-blur-sm">
+        <span class="w-2 h-2 bg-emerald-500 rounded-full animate-ping"></span>
+        <span id="toastText" class="font-medium">Changes Auto-Saved to browser link!</span>
     </div>
 
     <!-- Floating Instruction and Action Controller (Non-Printable) -->
     <div class="no-print w-full max-w-xl mb-6 p-4 bg-white border border-slate-200 rounded-2xl shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
         <div>
             <h2 class="text-sm font-bold text-slate-800 flex items-center gap-1.5">
-                <span class="w-2.5 h-2.5 bg-green-500 rounded-full animate-ping"></span>
+                <span class="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse"></span>
                 Live Collaboration Workspace
             </h2>
-            <p class="text-xs text-slate-500">Edit copy inline. Drop images. Share your browser's link directly.</p>
+            <p class="text-xs text-slate-500">Edit copy inline. Drop images or URLs. Copy browser link to share.</p>
         </div>
         <div class="flex items-center gap-2">
             <button onclick="restoreAllButtons()" id="restoreButtonsBtn" class="hidden bg-emerald-500 hover:bg-emerald-600 text-white text-xs px-3.5 py-2 rounded-lg font-bold flex items-center gap-1.5 transition-all shadow-md shadow-emerald-500/15">
@@ -127,8 +125,8 @@
             <button onclick="toggleComments()" id="commentToggleBtn" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs px-3.5 py-2 rounded-lg font-semibold flex items-center gap-2 transition-all">
                 <i class="fa-regular fa-comment-dots text-sm"></i> Comments
             </button>
-            <button onclick="generateShareLink()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3.5 py-2 rounded-lg font-bold flex items-center gap-2 transition-all shadow-md shadow-blue-500/15">
-                <i class="fa-solid fa-link text-sm"></i> Get Share Link
+            <button onclick="triggerCopyLink()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3.5 py-2 rounded-lg font-bold flex items-center gap-2 transition-all shadow-md shadow-blue-500/15">
+                <i class="fa-solid fa-link text-sm"></i> Copy Share Link
             </button>
             <button onclick="window.print()" class="bg-slate-800 hover:bg-slate-950 text-white text-xs px-3.5 py-2 rounded-lg font-semibold flex items-center gap-1.5 transition-all">
                 <i class="fa-solid fa-print"></i> Export
@@ -158,13 +156,13 @@
                 <!-- Email Item Layout -->
                 <div class="flex gap-3">
                     <!-- Fake Avatar Icon -->
-                    <div class="w-10 h-10 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center text-xs shrink-0 shadow-sm shadow-blue-600/10">
+                    <div id="inboxAvatar" class="w-10 h-10 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center text-xs shrink-0 shadow-sm shadow-blue-600/10">
                         TG
                     </div>
                     <!-- Envelope Contents -->
                     <div class="flex-grow min-w-0">
                         <div class="flex justify-between items-baseline">
-                            <span class="font-bold text-slate-900 text-[14px]">Think with Google APAC</span>
+                            <span class="font-bold text-slate-900 text-[13px]">Think with Google APAC</span>
                             <span class="text-[11px] text-slate-400">12:20 PM</span>
                         </div>
                         
@@ -203,18 +201,20 @@
                         <i class="fa-regular fa-comment"></i>
                     </button>
                     <!-- Logo container -->
-                    <div onclick="triggerImageUpload('logo-file')" class="placeholder-box w-24 h-8 rounded-lg flex items-center justify-center">
-                        <input type="file" id="logo-file" class="hidden" accept="image/*" onchange="handleImage(this, 'logo-img', 'logo-svg')">
+                    <div onclick="openImageManager('logo')" class="placeholder-box w-28 h-10 rounded-lg flex flex-col items-center justify-center overflow-hidden border border-slate-200">
                         <img id="logo-img" class="hidden w-full h-full object-contain p-1" />
-                        <svg id="logo-svg" width="35" height="35" viewBox="0 0 100 100" class="text-slate-400 opacity-60">
-                            <circle cx="50" cy="50" r="24" fill="none" stroke="currentColor" stroke-width="2"/>
-                            <circle cx="38" cy="50" r="24" fill="none" stroke="currentColor" stroke-width="2"/>
-                            <circle cx="62" cy="50" r="24" fill="none" stroke="currentColor" stroke-width="2"/>
-                        </svg>
+                        <div id="logo-svg" class="flex flex-col items-center justify-center text-slate-400 opacity-60">
+                            <svg width="24" height="24" viewBox="0 0 100 100" class="stroke-current fill-none">
+                                <circle cx="50" cy="50" r="24" stroke-width="2"/>
+                                <circle cx="38" cy="50" r="24" stroke-width="2"/>
+                                <circle cx="62" cy="50" r="24" stroke-width="2"/>
+                            </svg>
+                        </div>
+                        <div id="logo-badge" class="absolute bottom-0 inset-x-0 bg-amber-500 text-white text-[8px] font-semibold text-center py-0.5 hidden no-print">LOCAL ONLY</div>
                     </div>
                 </div>
 
-                <!-- LOREM IPSUM Wayfinder / Preheader -->
+                <!-- HERO WAYFINDER -->
                 <div class="relative group">
                     <button onclick="openComment('preheader')" class="comment-badge hidden no-print absolute -top-1 -right-2 bg-amber-500 hover:bg-amber-600 text-white w-4 h-4 rounded-full flex items-center justify-center text-[8px] shadow-md transition-all">
                         <i class="fa-regular fa-comment"></i>
@@ -244,13 +244,13 @@
 
                 <!-- Dual CTA Buttons -->
                 <div class="mt-6 flex flex-wrap items-center justify-center gap-4">
-                    <div class="relative group cta-wrapper inline-block">
+                    <div class="cta-wrapper group relative inline-block">
                         <span id="btn_cta1" role="button" contenteditable="true" data-name="CTA 1" data-words="3" data-required="true" class="btn-pill block">Default</span>
                         <button onclick="toggleButtonVisibility('btn_cta1')" class="no-print absolute -top-2 -right-2 bg-rose-500 hover:bg-rose-600 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] shadow-md transition-all opacity-0 group-hover:opacity-100 focus:opacity-100" title="Hide Button">
                             <i class="fa-solid fa-trash-can"></i>
                         </button>
                     </div>
-                    <div class="relative group cta-wrapper inline-block">
+                    <div class="cta-wrapper group relative inline-block">
                         <span id="btn_cta2" role="button" contenteditable="true" data-name="CTA 2" data-words="3" data-required="false" class="btn-pill-secondary block">Default</span>
                         <button onclick="toggleButtonVisibility('btn_cta2')" class="no-print absolute -top-2 -right-2 bg-rose-500 hover:bg-rose-600 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] shadow-md transition-all opacity-0 group-hover:opacity-100 focus:opacity-100" title="Hide Button">
                             <i class="fa-solid fa-trash-can"></i>
@@ -266,18 +266,20 @@
 
             <!-- Hero Centered Image Media Block (Clover Shape representation) -->
             <div class="px-2">
-                <div onclick="triggerImageUpload('hero-file')" class="placeholder-box w-full aspect-[16/9] rounded-3xl flex items-center justify-center relative shadow-sm">
-                    <input type="file" id="hero-file" class="hidden" accept="image/*" onchange="handleImage(this, 'hero-img', 'hero-svg')">
-                    <img id="hero-img" class="hidden w-full h-full object-cover animate-fade-in" />
-                    <svg id="hero-svg" width="100" height="100" viewBox="0 0 100 100" class="text-slate-300 opacity-80">
-                        <circle cx="50" cy="50" r="32" fill="none" stroke="currentColor" stroke-width="1.5"/>
-                        <circle cx="34" cy="50" r="32" fill="none" stroke="currentColor" stroke-width="1.5"/>
-                        <circle cx="66" cy="50" r="32" fill="none" stroke="currentColor" stroke-width="1.5"/>
-                        <circle cx="50" cy="34" r="32" fill="none" stroke="currentColor" stroke-width="1.5"/>
-                        <circle cx="50" cy="66" r="32" fill="none" stroke="currentColor" stroke-width="1.5"/>
-                    </svg>
+                <div onclick="openImageManager('hero')" class="placeholder-box w-full aspect-[16/9] rounded-3xl flex items-center justify-center relative shadow-sm overflow-hidden">
+                    <img id="hero-img" class="hidden w-full h-full object-cover" />
+                    <div id="hero-svg" class="flex items-center justify-center">
+                        <svg width="100" height="100" viewBox="0 0 100 100" class="text-slate-300 opacity-80 stroke-current fill-none">
+                            <circle cx="50" cy="50" r="32" stroke-width="1.5"/>
+                            <circle cx="34" cy="50" r="32" stroke-width="1.5"/>
+                            <circle cx="66" cy="50" r="32" stroke-width="1.5"/>
+                            <circle cx="50" cy="34" r="32" stroke-width="1.5"/>
+                            <circle cx="50" cy="66" r="32" stroke-width="1.5"/>
+                        </svg>
+                    </div>
                     <!-- Dimension Indicator -->
-                    <span class="absolute bottom-3 right-3 text-[9px] bg-slate-900/60 text-white font-mono px-2 py-1 rounded-full uppercase tracking-wider">Ratio 1:1 (Export 2x)</span>
+                    <span class="absolute bottom-3 right-3 text-[9px] bg-slate-900/60 text-white font-mono px-2 py-1 rounded-full uppercase tracking-wider no-print">Ratio 1:1 (Export 2x)</span>
+                    <div id="hero-badge" class="absolute bottom-3 left-3 bg-amber-500 text-white text-[9px] font-bold px-2.5 py-0.5 rounded-full hidden no-print">LOCAL ONLY</div>
                 </div>
             </div>
 
@@ -288,14 +290,16 @@
                 <div class="space-y-6 max-w-md mx-auto">
                     <!-- Feature #1 -->
                     <div class="flex gap-4 items-start relative group">
-                        <div onclick="triggerImageUpload('ft1-file')" class="placeholder-box shrink-0 w-12 h-12 rounded-xl flex items-center justify-center shadow-sm">
-                            <input type="file" id="ft1-file" class="hidden" accept="image/*" onchange="handleImage(this, 'ft1-img', 'ft1-svg')">
+                        <div onclick="openImageManager('ft1')" class="placeholder-box shrink-0 w-12 h-12 rounded-xl flex items-center justify-center shadow-sm overflow-hidden">
                             <img id="ft1-img" class="hidden w-full h-full object-cover" />
-                            <svg id="ft1-svg" width="22" height="22" viewBox="0 0 100 100" class="text-slate-400 opacity-60">
-                                <circle cx="50" cy="50" r="30" fill="none" stroke="currentColor" stroke-width="2"/>
-                                <circle cx="35" cy="50" r="30" fill="none" stroke="currentColor" stroke-width="2"/>
-                                <circle cx="65" cy="50" r="30" fill="none" stroke="currentColor" stroke-width="2"/>
-                            </svg>
+                            <div id="ft1-svg" class="flex items-center justify-center">
+                                <svg width="22" height="22" viewBox="0 0 100 100" class="text-slate-400 opacity-60 stroke-current fill-none">
+                                    <circle cx="50" cy="50" r="30" stroke-width="2"/>
+                                    <circle cx="35" cy="50" r="30" stroke-width="2"/>
+                                    <circle cx="65" cy="50" r="30" stroke-width="2"/>
+                                </svg>
+                            </div>
+                            <div id="ft1-badge" class="absolute bottom-0 inset-x-0 bg-amber-500 text-white text-[7px] font-semibold text-center py-0.5 hidden no-print">LOCAL ONLY</div>
                         </div>
                         <div class="flex-grow space-y-1">
                             <h3 id="field_ft1_title" contenteditable="true" data-name="Title #1" data-max="65" data-min="10" data-required="true" class="font-bold text-slate-900 text-sm">Subheadline</h3>
@@ -307,14 +311,16 @@
 
                     <!-- Feature #2 -->
                     <div class="flex gap-4 items-start relative group">
-                        <div onclick="triggerImageUpload('ft2-file')" class="placeholder-box shrink-0 w-12 h-12 rounded-xl flex items-center justify-center shadow-sm">
-                            <input type="file" id="ft2-file" class="hidden" accept="image/*" onchange="handleImage(this, 'ft2-img', 'ft2-svg')">
+                        <div onclick="openImageManager('ft2')" class="placeholder-box shrink-0 w-12 h-12 rounded-xl flex items-center justify-center shadow-sm overflow-hidden">
                             <img id="ft2-img" class="hidden w-full h-full object-cover" />
-                            <svg id="ft2-svg" width="22" height="22" viewBox="0 0 100 100" class="text-slate-400 opacity-60">
-                                <circle cx="50" cy="50" r="30" fill="none" stroke="currentColor" stroke-width="2"/>
-                                <circle cx="35" cy="50" r="30" fill="none" stroke="currentColor" stroke-width="2"/>
-                                <circle cx="65" cy="50" r="30" fill="none" stroke="currentColor" stroke-width="2"/>
-                            </svg>
+                            <div id="ft2-svg" class="flex items-center justify-center">
+                                <svg width="22" height="22" viewBox="0 0 100 100" class="text-slate-400 opacity-60 stroke-current fill-none">
+                                    <circle cx="50" cy="50" r="30" stroke-width="2"/>
+                                    <circle cx="35" cy="50" r="30" stroke-width="2"/>
+                                    <circle cx="65" cy="50" r="30" stroke-width="2"/>
+                                </svg>
+                            </div>
+                            <div id="ft2-badge" class="absolute bottom-0 inset-x-0 bg-amber-500 text-white text-[7px] font-semibold text-center py-0.5 hidden no-print">LOCAL ONLY</div>
                         </div>
                         <div class="flex-grow space-y-1">
                             <h3 id="field_ft2_title" contenteditable="true" data-name="Title #2" data-max="65" data-min="10" data-required="true" class="font-bold text-slate-900 text-sm">Subheadline</h3>
@@ -326,14 +332,16 @@
 
                     <!-- Feature #3 -->
                     <div class="flex gap-4 items-start relative group">
-                        <div onclick="triggerImageUpload('ft3-file')" class="placeholder-box shrink-0 w-12 h-12 rounded-xl flex items-center justify-center shadow-sm">
-                            <input type="file" id="ft3-file" class="hidden" accept="image/*" onchange="handleImage(this, 'ft3-img', 'ft3-svg')">
+                        <div onclick="openImageManager('ft3')" class="placeholder-box shrink-0 w-12 h-12 rounded-xl flex items-center justify-center shadow-sm overflow-hidden">
                             <img id="ft3-img" class="hidden w-full h-full object-cover" />
-                            <svg id="ft3-svg" width="22" height="22" viewBox="0 0 100 100" class="text-slate-400 opacity-60">
-                                <circle cx="50" cy="50" r="30" fill="none" stroke="currentColor" stroke-width="2"/>
-                                <circle cx="35" cy="50" r="30" fill="none" stroke="currentColor" stroke-width="2"/>
-                                <circle cx="65" cy="50" r="30" fill="none" stroke="currentColor" stroke-width="2"/>
-                            </svg>
+                            <div id="ft3-svg" class="flex items-center justify-center">
+                                <svg width="22" height="22" viewBox="0 0 100 100" class="text-slate-400 opacity-60 stroke-current fill-none">
+                                    <circle cx="50" cy="50" r="30" stroke-width="2"/>
+                                    <circle cx="35" cy="50" r="30" stroke-width="2"/>
+                                    <circle cx="65" cy="50" r="30" stroke-width="2"/>
+                                </svg>
+                            </div>
+                            <div id="ft3-badge" class="absolute bottom-0 inset-x-0 bg-amber-500 text-white text-[7px] font-semibold text-center py-0.5 hidden no-print">LOCAL ONLY</div>
                         </div>
                         <div class="flex-grow space-y-1">
                             <h3 id="field_ft3_title" contenteditable="true" data-name="Title #3" data-max="65" data-min="10" data-required="true" class="font-bold text-slate-900 text-sm">Subheadline</h3>
@@ -349,14 +357,16 @@
             <section class="p-4 pt-8">
                 <div class="bg-slate-50/50 rounded-3xl p-6 text-center border border-slate-100 flex flex-col items-center space-y-4">
                     <!-- Closer Icon -->
-                    <div onclick="triggerImageUpload('closer-file')" class="placeholder-box w-12 h-12 rounded-xl flex items-center justify-center shadow-sm">
-                        <input type="file" id="closer-file" class="hidden" accept="image/*" onchange="handleImage(this, 'closer-img', 'closer-svg')">
+                    <div onclick="openImageManager('closer')" class="placeholder-box w-12 h-12 rounded-xl flex items-center justify-center shadow-sm overflow-hidden">
                         <img id="closer-img" class="hidden w-full h-full object-cover" />
-                        <svg id="closer-svg" width="24" height="24" viewBox="0 0 100 100" class="text-slate-400 opacity-60">
-                            <circle cx="50" cy="50" r="30" fill="none" stroke="currentColor" stroke-width="2"/>
-                            <circle cx="35" cy="50" r="30" fill="none" stroke="currentColor" stroke-width="2"/>
-                            <circle cx="65" cy="50" r="30" fill="none" stroke="currentColor" stroke-width="2"/>
-                        </svg>
+                        <div id="closer-svg" class="flex items-center justify-center">
+                            <svg width="24" height="24" viewBox="0 0 100 100" class="text-slate-400 opacity-60 stroke-current fill-none">
+                                <circle cx="50" cy="50" r="30" stroke-width="2"/>
+                                <circle cx="35" cy="50" r="30" stroke-width="2"/>
+                                <circle cx="65" cy="50" r="30" stroke-width="2"/>
+                            </svg>
+                        </div>
+                        <div id="closer-badge" class="absolute bottom-0 inset-x-0 bg-amber-500 text-white text-[7px] font-semibold text-center py-0.5 hidden no-print">LOCAL ONLY</div>
                     </div>
 
                     <!-- Closer Subheadline -->
@@ -371,7 +381,7 @@
 
                     <!-- Closer CTA Button -->
                     <div class="pt-2">
-                        <div class="relative group cta-wrapper inline-block">
+                        <div class="cta-wrapper group relative inline-block">
                             <span id="btn_closer_cta" role="button" contenteditable="true" data-name="CTA" data-words="3" data-required="true" class="btn-pill-secondary border-blue-500/30 px-8 py-2 text-sm block">Default</span>
                             <button onclick="toggleButtonVisibility('btn_closer_cta')" class="no-print absolute -top-2 -right-2 bg-rose-500 hover:bg-rose-600 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] shadow-md transition-all opacity-0 group-hover:opacity-100 focus:opacity-100" title="Hide Button">
                                 <i class="fa-solid fa-trash-can"></i>
@@ -381,6 +391,45 @@
                 </div>
             </section>
 
+        </div>
+    </div>
+
+    <!-- Image Upload and URL Manager Modal (Popup) -->
+    <div id="imageModal" class="no-print fixed inset-0 bg-slate-950/45 flex items-center justify-center p-4 z-50 hidden backdrop-blur-sm">
+        <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl border border-slate-200 overflow-hidden">
+            <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+                <span class="text-xs font-bold text-slate-800 flex items-center gap-2">
+                    <i class="fa-regular fa-image text-blue-500 text-sm"></i> Manage Image Source
+                </span>
+                <button onclick="closeImageManager()" class="text-slate-400 hover:text-slate-600 text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="p-5 space-y-4 text-xs">
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Option A: Paste Web Link (Saves permanently to Share Links!)</label>
+                    <input type="text" id="imgModalUrl" placeholder="https://example.com/your-image.png" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 outline-none focus:border-blue-500 focus:bg-white transition-all">
+                    <p class="text-[10px] text-slate-400 mt-1">💡 You can paste image links directly from Figma, Google, or an image host like Imgur.</p>
+                </div>
+                <div class="relative flex py-2 items-center">
+                    <div class="flex-grow border-t border-slate-100"></div>
+                    <span class="flex-shrink mx-4 text-slate-400 font-bold uppercase tracking-wider text-[9px]">or</span>
+                    <div class="flex-grow border-t border-slate-100"></div>
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 mb-2">Option B: Upload Local File (Temporary preview only)</label>
+                    <input type="file" id="imgModalFile" accept="image/*" class="w-full text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
+                    <p class="text-[10px] text-amber-600 mt-1.5"><i class="fa-solid fa-triangle-exclamation"></i> Note: Local uploaded files cannot fit inside browser links and won't save when you share the URL.</p>
+                </div>
+                <div class="pt-2 flex gap-3">
+                    <button onclick="saveImageSelection()" class="flex-grow bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl transition-all">
+                        Apply Changes
+                    </button>
+                    <button onclick="clearImageSelection()" class="bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold px-4 py-2.5 rounded-xl transition-all">
+                        Remove
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -402,10 +451,10 @@
         </div>
 
         <!-- Inline Comment Composer Area -->
-        <div class="p-4 border-t border-slate-100 space-y-2">
+        <div class="p-4 border-t border-slate-100 space-y-2 bg-slate-50">
             <span id="activeContextTag" class="text-[10px] font-bold text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full uppercase inline-block">Reviewing: General Page</span>
-            <input type="text" id="reviewerName" placeholder="Your Name" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs focus:bg-white focus:border-blue-500 outline-none">
-            <textarea id="commentBody" placeholder="Leave structural or copy change requests..." rows="3" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-xs focus:bg-white focus:border-blue-500 outline-none"></textarea>
+            <input type="text" id="reviewerName" placeholder="Your Name" class="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs focus:border-blue-500 outline-none">
+            <textarea id="commentBody" placeholder="Leave structural or copy change requests..." rows="3" class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-xs focus:border-blue-500 outline-none"></textarea>
             <button onclick="addComment()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-lg text-xs transition-all">
                 Post Comment
             </button>
@@ -413,9 +462,21 @@
     </aside>
 
     <script>
+        // State variables
         let comments = [];
         let activeComponentContext = 'general';
         let showCommentsSidebar = false;
+        
+        // Image Management States
+        let currentTargetImageId = '';
+        let imageSources = {
+            logo: { type: 'none', value: '' },
+            hero: { type: 'none', value: '' },
+            ft1: { type: 'none', value: '' },
+            ft2: { type: 'none', value: '' },
+            ft3: { type: 'none', value: '' },
+            closer: { type: 'none', value: '' }
+        };
 
         // Initialize Workspace Bindings
         window.onload = function() {
@@ -424,6 +485,17 @@
             loadStateFromURL();
             setupAutoSaveTriggers();
         };
+
+        // Auto Save Event Trigger mapping
+        function setupAutoSaveTriggers() {
+            const inputs = document.querySelectorAll('[contenteditable="true"]');
+            inputs.forEach(el => {
+                el.addEventListener('input', () => {
+                    syncInboxPreviews();
+                    saveStateToURL(true); // silent
+                });
+            });
+        }
 
         // Handle button hides dynamically
         function toggleButtonVisibility(id) {
@@ -435,7 +507,7 @@
                 }
             }
             updateRestoreButtonVisibility();
-            autoSaveState();
+            saveStateToURL(true);
         }
 
         // Restore all interactive buttons
@@ -444,7 +516,7 @@
                 wrapper.classList.remove('hidden');
             });
             updateRestoreButtonVisibility();
-            autoSaveState();
+            saveStateToURL(true);
         }
 
         // Check helper logic for the restore banner button
@@ -458,36 +530,13 @@
             }
         }
 
-        // Helper to check if a specific button wrapper is hidden
-        function isButtonHidden(id) {
-            const btn = document.getElementById(id);
-            if (!btn) return true;
-            const wrapper = btn.closest('.cta-wrapper');
-            return wrapper ? wrapper.classList.contains('hidden') : false;
-        }
-
-        // Helper to show/hide a button wrapper based on saved state
-        function setButtonVisibility(id, isHidden) {
-            const btn = document.getElementById(id);
-            if (!btn) return;
-            const wrapper = btn.closest('.cta-wrapper');
-            if (wrapper) {
-                if (isHidden) {
-                    wrapper.classList.add('hidden');
-                } else {
-                    wrapper.classList.remove('hidden');
-                }
-            }
-        }
-
         // Real-Time character count / input boundary feedback
         function setupSpecTrackers() {
             const specElements = document.querySelectorAll('[contenteditable="true"]');
             const bubble = document.getElementById('specBubble');
 
             specElements.forEach(el => {
-                // Focus: open specific tooltip bubble
-                el.addEventListener('focus', function(e) {
+                el.addEventListener('focus', function() {
                     const name = el.getAttribute('data-name');
                     const max = el.getAttribute('data-max');
                     const min = el.getAttribute('data-min');
@@ -495,91 +544,29 @@
 
                     if (name) {
                         document.getElementById('specName').innerText = name;
-                        
                         if (words) {
                             document.getElementById('specRules').innerText = `Max Word Count: ${words}`;
                         } else {
                             document.getElementById('specRules').innerText = `Min ${min}, Max ${max} Chars`;
                         }
-                        
                         updateCounter(el);
                         
-                        // Reposition floating bubble relative to item
+                        // Reposition bubble
                         const rect = el.getBoundingClientRect();
-                        bubble.style.top = `${rect.top + window.scrollY - bubble.offsetHeight - 10}px`;
+                        bubble.style.top = `${rect.top + window.scrollY - bubble.offsetHeight - 12}px`;
                         bubble.style.left = `${rect.left + window.scrollX + (rect.width/2)}px`;
                         bubble.classList.remove('hidden');
                     }
                 });
 
-                // Keypress: update count real-time and handle limits
                 el.addEventListener('input', function() {
                     updateCounter(el);
-                    syncInboxPreviews();
                 });
 
                 el.addEventListener('blur', function() {
                     bubble.classList.add('hidden');
                 });
             });
-        }
-
-        // Auto-save setup to listen to every edit instantly
-        function setupAutoSaveTriggers() {
-            const editableElements = document.querySelectorAll('[contenteditable="true"]');
-            editableElements.forEach(el => {
-                el.addEventListener('input', function() {
-                    autoSaveState();
-                });
-            });
-        }
-
-        // Serializes state and updates browser URL without reloading
-        function autoSaveState() {
-            const state = {
-                subject: document.getElementById('field_subject').innerText,
-                preview: document.getElementById('field_preview_text').innerText,
-                wayfinder: document.getElementById('field_wayfinder').innerText,
-                eyebrow: document.getElementById('field_eyebrow').innerText,
-                headline: document.getElementById('field_headline').innerText,
-                headline_accent: document.getElementById('field_headline_accent').innerText,
-                description: document.getElementById('field_description').innerText,
-                disclaimer: document.getElementById('field_disclaimer').innerText,
-                closer_sub: document.getElementById('field_closer_sub').innerText,
-                closer_desc: document.getElementById('field_closer_desc').innerText,
-                
-                // Button Text Values
-                cta1_text: document.getElementById('btn_cta1').innerText,
-                cta2_text: document.getElementById('btn_cta2').innerText,
-                closer_cta_text: document.getElementById('btn_closer_cta').innerText,
-
-                // Button Visibility states
-                cta1_hidden: isButtonHidden('btn_cta1'),
-                cta2_hidden: isButtonHidden('btn_cta2'),
-                closer_cta_hidden: isButtonHidden('btn_closer_cta'),
-
-                features: {
-                    title: document.getElementById('field_feature_title').innerText,
-                    f1_title: document.getElementById('field_ft1_title').innerText,
-                    f1_desc: document.getElementById('field_ft1_desc').innerText,
-                    f2_title: document.getElementById('field_ft2_title').innerText,
-                    f2_desc: document.getElementById('field_ft2_desc').innerText,
-                    f3_title: document.getElementById('field_ft3_title').innerText,
-                    f3_desc: document.getElementById('field_ft3_desc').innerText,
-                },
-                comments: comments
-            };
-
-            try {
-                const jsonStr = JSON.stringify(state);
-                const utf8Bytes = encodeURIComponent(jsonStr).replace(/%([0-9A-F]{2})/g, function(match, p1) {
-                    return String.fromCharCode('0x' + p1);
-                });
-                const hash = btoa(utf8Bytes);
-                history.replaceState(null, null, '#state=' + hash);
-            } catch (err) {
-                console.error('Failed to auto-save to browser URL:', err);
-            }
         }
 
         // Live Subject / Preview text simulation
@@ -591,23 +578,80 @@
             document.getElementById('inboxPreviewText').innerText = previewVal || 'Preview Text Placeholder next to subject line...';
         }
 
-        // Handle Image trigger and uploads
-        function triggerImageUpload(id) {
-            document.getElementById(id).click();
+        // Image Manager Overlay Modal Logic
+        function openImageManager(targetId) {
+            currentTargetImageId = targetId;
+            const state = imageSources[targetId];
+            
+            // Populate dialog inputs
+            const urlInput = document.getElementById('imgModalUrl');
+            const fileInput = document.getElementById('imgModalFile');
+            
+            urlInput.value = state.type === 'url' ? state.value : '';
+            fileInput.value = ''; // clear file picker
+
+            const modal = document.getElementById('imageModal');
+            modal.classList.remove('hidden');
         }
 
-        function handleImage(input, imgId, svgId) {
-            if (input.files && input.files[0]) {
+        function closeImageManager() {
+            document.getElementById('imageModal').classList.add('hidden');
+        }
+
+        function saveImageSelection() {
+            const urlInput = document.getElementById('imgModalUrl').value.trim();
+            const fileInput = document.getElementById('imgModalFile');
+
+            if (fileInput.files && fileInput.files[0]) {
+                // If local file selected
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    const img = document.getElementById(imgId);
-                    img.src = e.target.result;
-                    img.classList.remove('hidden');
-                    document.getElementById(svgId).classList.add('hidden');
-                    // Trigger state save when image is updated
-                    autoSaveState();
+                    applyImageToElement(currentTargetImageId, 'local', e.target.result);
+                    closeImageManager();
+                    saveStateToURL(true);
+                };
+                reader.readAsDataURL(fileInput.files[0]);
+            } else if (urlInput !== '') {
+                // If Web URL provided
+                applyImageToElement(currentTargetImageId, 'url', urlInput);
+                closeImageManager();
+                saveStateToURL(true);
+            } else {
+                closeImageManager();
+            }
+        }
+
+        function clearImageSelection() {
+            applyImageToElement(currentTargetImageId, 'none', '');
+            closeImageManager();
+            saveStateToURL(true);
+        }
+
+        function applyImageToElement(targetId, type, value) {
+            imageSources[targetId] = { type: type, value: value };
+            
+            const imgEl = document.getElementById(`${targetId}-img`);
+            const svgEl = document.getElementById(`${targetId}-svg`);
+            const badgeEl = document.getElementById(`${targetId}-badge`);
+
+            if (type === 'none' || value === '') {
+                imgEl.classList.add('hidden');
+                imgEl.src = '';
+                svgEl.classList.remove('hidden');
+                if (badgeEl) badgeEl.classList.add('hidden');
+            } else {
+                imgEl.src = value;
+                imgEl.classList.remove('hidden');
+                svgEl.classList.add('hidden');
+                
+                // Show warn badge for temporary local files
+                if (badgeEl) {
+                    if (type === 'local') {
+                        badgeEl.classList.remove('hidden');
+                    } else {
+                        badgeEl.classList.add('hidden');
+                    }
                 }
-                reader.readAsDataURL(input.files[0]);
             }
         }
 
@@ -685,7 +729,7 @@
 
             document.getElementById('commentBody').value = '';
             renderComments();
-            autoSaveState();
+            saveStateToURL(true);
         }
 
         function renderComments() {
@@ -715,48 +759,94 @@
             );
         }
 
-        // Generates Share URL and copies to clipboard with Toast Alert
-        function generateShareLink() {
-            // Re-sync final states
-            autoSaveState();
+        // State Packaging System
+        function saveStateToURL(silent = false) {
+            // Package text copy values
+            const state = {
+                subject: document.getElementById('field_subject').innerText,
+                preview: document.getElementById('field_preview_text').innerText,
+                wayfinder: document.getElementById('field_wayfinder').innerText,
+                eyebrow: document.getElementById('field_eyebrow').innerText,
+                headline: document.getElementById('field_headline').innerText,
+                headline_accent: document.getElementById('field_headline_accent').innerText,
+                description: document.getElementById('field_description').innerText,
+                disclaimer: document.getElementById('field_disclaimer').innerText,
+                closer_sub: document.getElementById('field_closer_sub').innerText,
+                closer_desc: document.getElementById('field_closer_desc').innerText,
+                
+                // Package button visibility states
+                cta1_hidden: document.getElementById('btn_cta1').closest('.cta-wrapper').classList.contains('hidden'),
+                cta2_hidden: document.getElementById('btn_cta2').closest('.cta-wrapper').classList.contains('hidden'),
+                closer_cta_hidden: document.getElementById('btn_closer_cta').closest('.cta-wrapper').classList.contains('hidden'),
+                
+                // Package features elements
+                features: {
+                    title: document.getElementById('field_feature_title').innerText,
+                    f1_title: document.getElementById('field_ft1_title').innerText,
+                    f1_desc: document.getElementById('field_ft1_desc').innerText,
+                    f2_title: document.getElementById('field_ft2_title').innerText,
+                    f2_desc: document.getElementById('field_ft2_desc').innerText,
+                    f3_title: document.getElementById('field_ft3_title').innerText,
+                    f3_desc: document.getElementById('field_ft3_desc').innerText,
+                },
+                
+                // Package saved Web Images (excluding massive raw local uploads)
+                images: {
+                    logo: imageSources.logo.type === 'url' ? imageSources.logo.value : '',
+                    hero: imageSources.hero.type === 'url' ? imageSources.hero.value : '',
+                    ft1: imageSources.ft1.type === 'url' ? imageSources.ft1.value : '',
+                    ft2: imageSources.ft2.type === 'url' ? imageSources.ft2.value : '',
+                    ft3: imageSources.ft3.type === 'url' ? imageSources.ft3.value : '',
+                    closer: imageSources.closer.type === 'url' ? imageSources.closer.value : ''
+                },
+                
+                // Package comments
+                comments: comments
+            };
 
-            // Copy active URL to clipboard (including state hash)
-            const currentURL = window.location.href;
+            const hash = btoa(unescape(encodeURIComponent(JSON.stringify(state))));
+            window.location.hash = `state=${hash}`;
+
+            if (!silent) {
+                showToast("Shareable link successfully created in your address bar!");
+            }
+        }
+
+        function triggerCopyLink() {
+            saveStateToURL(true); // make sure URL hash is absolute fresh
+            const shareUrl = window.location.href;
+            
             const dummy = document.createElement('textarea');
             document.body.appendChild(dummy);
-            dummy.value = currentURL;
+            dummy.value = shareUrl;
             dummy.select();
-            
-            try {
-                document.execCommand('copy');
-                showNotificationToast();
-            } catch (err) {
-                console.error('Failed to copy share link:', err);
-            }
+            document.execCommand('copy');
             document.body.removeChild(dummy);
+
+            showToast("Copied! Share URL copied to clipboard.");
         }
 
-        // Displays our modern UI Toast Notification instead of using alert()
-        function showNotificationToast() {
+        // Custom UI Slide success notifications
+        function showToast(text) {
             const toast = document.getElementById('toastNotification');
-            toast.classList.remove('translate-y-[-100px]', 'opacity-0');
-            toast.classList.add('translate-y-0', 'opacity-100');
+            const toastText = document.getElementById('toastText');
+            toastText.innerText = text;
+            
+            toast.classList.remove('-translate-y-24');
+            toast.classList.add('translate-y-0');
+
             setTimeout(() => {
-                toast.classList.remove('translate-y-0', 'opacity-100');
-                toast.classList.add('translate-y-[-100px]', 'opacity-0');
-            }, 4000);
+                toast.classList.remove('translate-y-0');
+                toast.classList.add('-translate-y-24');
+            }, 3000);
         }
 
-        // De-serializes state from URL on page load
         function loadStateFromURL() {
             const hash = window.location.hash;
             if (!hash || !hash.startsWith('#state=')) return;
 
             try {
-                const base64 = hash.substring(7);
-                const rawJson = decodeURIComponent(atob(base64).split('').map(function(c) {
-                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-                }).join(''));
+                const rawJson = decodeURIComponent(escape(atob(hash.substring(7))));
                 const state = JSON.parse(rawJson);
 
                 if (state.subject) document.getElementById('field_subject').innerText = state.subject;
@@ -770,16 +860,12 @@
                 if (state.closer_sub) document.getElementById('field_closer_sub').innerText = state.closer_sub;
                 if (state.closer_desc) document.getElementById('field_closer_desc').innerText = state.closer_desc;
                 
-                // Load Custom Button Copy if modified
-                if (state.cta1_text) document.getElementById('btn_cta1').innerText = state.cta1_text;
-                if (state.cta2_text) document.getElementById('btn_cta2').innerText = state.cta2_text;
-                if (state.closer_cta_text) document.getElementById('btn_closer_cta').innerText = state.closer_cta_text;
+                // Load button visibilities
+                if (state.cta1_hidden) toggleButtonVisibility('btn_cta1');
+                if (state.cta2_hidden) toggleButtonVisibility('btn_cta2');
+                if (state.closer_cta_hidden) toggleButtonVisibility('btn_closer_cta');
 
-                // Load saved button states (Hidden vs Visible)
-                setButtonVisibility('btn_cta1', state.cta1_hidden);
-                setButtonVisibility('btn_cta2', state.cta2_hidden);
-                setButtonVisibility('btn_closer_cta', state.closer_cta_hidden);
-
+                // Load Features section content
                 if (state.features) {
                     if (state.features.title) document.getElementById('field_feature_title').innerText = state.features.title;
                     if (state.features.f1_title) document.getElementById('field_ft1_title').innerText = state.features.f1_title;
@@ -789,13 +875,24 @@
                     if (state.features.f3_title) document.getElementById('field_ft3_title').innerText = state.features.f3_title;
                     if (state.features.f3_desc) document.getElementById('field_ft3_desc').innerText = state.features.f3_desc;
                 }
+
+                // Restore permanent Web Images (Figma or Web hosted URLs)
+                if (state.images) {
+                    if (state.images.logo) applyImageToElement('logo', 'url', state.images.logo);
+                    if (state.images.hero) applyImageToElement('hero', 'url', state.images.hero);
+                    if (state.images.ft1) applyImageToElement('ft1', 'url', state.images.ft1);
+                    if (state.images.ft2) applyImageToElement('ft2', 'url', state.images.ft2);
+                    if (state.images.ft3) applyImageToElement('ft3', 'url', state.images.ft3);
+                    if (state.images.closer) applyImageToElement('closer', 'url', state.images.closer);
+                }
+
+                // Load Comments
                 if (state.comments) {
                     comments = state.comments;
                     renderComments();
                 }
 
                 syncInboxPreviews();
-                updateRestoreButtonVisibility();
             } catch (err) {
                 console.error('Failed to unpack shared state:', err);
             }
