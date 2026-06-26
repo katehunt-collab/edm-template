@@ -9,38 +9,13 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=SF+Pro+Text:wght@400;500;600&display=swap');
         
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f1f5f9;
-            color: #0f172a;
-            transition: background-color 0.3s;
-        }
+        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; color: #0f172a; }
+        .font-sf { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        
+        [contenteditable="true"] { outline: none; transition: all 0.2s; }
+        [contenteditable="true"]:hover { background-color: rgba(59, 130, 246, 0.05); outline: 2px dashed rgba(59, 130, 246, 0.4); outline-offset: 4px; cursor: text; }
+        [contenteditable="true"]:focus { background-color: rgba(59, 130, 246, 0.08); outline: 2px solid #3b82f6; outline-offset: 4px; }
 
-        /* SF Pro style for iPhone inbox preview simulator */
-        .font-sf {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        }
-
-        /* Focus & editable helper styles */
-        [contenteditable="true"] {
-            outline: none;
-            transition: all 0.2s;
-        }
-
-        [contenteditable="true"]:hover {
-            background-color: rgba(59, 130, 246, 0.05);
-            outline: 2px dashed rgba(59, 130, 246, 0.4);
-            outline-offset: 4px;
-            cursor: text;
-        }
-
-        [contenteditable="true"]:focus {
-            background-color: rgba(59, 130, 246, 0.08);
-            outline: 2px solid #3b82f6;
-            outline-offset: 4px;
-        }
-
-        /* Grid placeholder patterns */
         .placeholder-box {
             background-image: linear-gradient(45deg, #e2e8f0 25%, transparent 25%, transparent 50%, #e2e8f0 50%, #e2e8f0 75%, transparent 75%, transparent);
             background-size: 30px 30px;
@@ -51,82 +26,53 @@
             overflow: hidden;
         }
 
-        .placeholder-box:hover {
-            border-color: #3b82f6;
-            background-color: #f0fdf4;
-            cursor: pointer;
-        }
+        .placeholder-box:hover { border-color: #3b82f6; background-color: #f0fdf4; cursor: pointer; }
+        .spec-popup { position: absolute; bottom: calc(100% + 12px); left: 50%; transform: translateX(-50%); z-index: 50; pointer-events: none; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); }
+        .btn-pill { display: inline-block; background-color: #2563eb; color: white; padding: 0.75rem 2rem; border-radius: 9999px; font-weight: 600; text-align: center; border: 2px solid #2563eb; transition: all 0.2s; }
+        .btn-pill-secondary { display: inline-block; background-color: white; color: #2563eb; padding: 0.75rem 2rem; border-radius: 9999px; font-weight: 600; text-align: center; border: 2px solid #e2e8f0; transition: all 0.2s; }
 
-        /* Spec guidance popups */
-        .spec-popup {
-            position: absolute;
-            bottom: calc(100% + 12px);
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 50;
-            pointer-events: none;
-            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        .btn-pill {
-            display: inline-block;
-            background-color: #2563eb;
-            color: white;
-            padding: 0.75rem 2rem;
-            border-radius: 9999px;
-            font-weight: 600;
-            text-align: center;
-            border: 2px solid #2563eb;
-            transition: all 0.2s;
-        }
-
-        .btn-pill-secondary {
-            display: inline-block;
-            background-color: white;
-            color: #2563eb;
-            padding: 0.75rem 2rem;
-            border-radius: 9999px;
-            font-weight: 600;
-            text-align: center;
-            border: 2px solid #e2e8f0;
-            transition: all 0.2s;
-        }
-
-        /* Hide interface widgets during client export / print prints */
         @media print {
             .no-print { display: none !important; }
             body { background-color: white; padding: 0; }
             .shadow-xl { box-shadow: none !important; }
-            .border-gray-100 { border: none !important; }
         }
     </style>
 </head>
 <body class="p-4 md:p-8 flex flex-col items-center">
 
-    <!-- Custom Sliding Auto-Save Notification Toast -->
     <div id="toastNotification" class="no-print fixed top-5 left-1/2 -translate-x-1/2 -translate-y-24 bg-slate-900/95 text-white text-xs px-5 py-3 rounded-full shadow-2xl z-50 flex items-center gap-3 transition-all duration-500 border border-slate-700/50 backdrop-blur-sm">
         <span class="w-2 h-2 bg-emerald-500 rounded-full animate-ping"></span>
-        <span id="toastText" class="font-medium">Changes Auto-Saved to browser link!</span>
+        <span id="toastText" class="font-medium">Changes Auto-Saved!</span>
     </div>
 
-    <!-- Floating Instruction and Action Controller (Non-Printable) -->
+    <!-- Backup Recovery Alert Banner -->
+    <div id="recoveryBanner" class="no-print hidden w-full max-w-xl mb-4 p-3.5 bg-amber-50 border border-amber-200 rounded-2xl flex items-center justify-between gap-3 text-xs shadow-sm">
+        <div class="flex items-center gap-2.5 text-amber-800">
+            <i class="fa-solid fa-clock-rotate-left text-base text-amber-600"></i>
+            <div>
+                <p class="font-bold">Unsaved local backup found!</p>
+                <p class="text-amber-700/80">Would you like to restore your last session copy and images?</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2 shrink-0">
+            <button onclick="dismissBackup()" class="px-2.5 py-1.5 rounded-lg text-amber-700 hover:bg-amber-100 font-semibold">Discard</button>
+            <button onclick="applyBackup()" class="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-bold shadow-sm shadow-amber-600/10">Restore</button>
+        </div>
+    </div>
+
     <div class="no-print w-full max-w-xl mb-6 p-4 bg-white border border-slate-200 rounded-2xl shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
         <div>
             <h2 class="text-sm font-bold text-slate-800 flex items-center gap-1.5">
-                <span class="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse"></span>
-                Live Collaboration Workspace
+                <span class="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse"></span> Think with Google APAC
             </h2>
-            <p class="text-xs text-slate-500">Edit copy inline. Drop images or URLs. Copy browser link to share.</p>
+            <p class="text-xs text-slate-500">Workspace auto-saves in real-time. Just copy the URL to share.</p>
         </div>
         <div class="flex items-center gap-2">
-            <button onclick="restoreAllButtons()" id="restoreButtonsBtn" class="hidden bg-emerald-500 hover:bg-emerald-600 text-white text-xs px-3.5 py-2 rounded-lg font-bold flex items-center gap-1.5 transition-all shadow-md shadow-emerald-500/15">
+            <button onclick="restoreAllButtons()" id="restoreButtonsBtn" class="hidden bg-emerald-500 hover:bg-emerald-600 text-white text-xs px-3.5 py-2 rounded-lg font-bold flex items-center gap-1.5 transition-all shadow-md">
                 <i class="fa-solid fa-plus text-sm"></i> Restore Buttons
             </button>
-            <button onclick="toggleComments()" id="commentToggleBtn" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs px-3.5 py-2 rounded-lg font-semibold flex items-center gap-2 transition-all">
-                <i class="fa-regular fa-comment-dots text-sm"></i> Comments
-            </button>
-            <button onclick="triggerCopyLink()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3.5 py-2 rounded-lg font-bold flex items-center gap-2 transition-all shadow-md shadow-blue-500/15">
-                <i class="fa-solid fa-link text-sm"></i> Copy Share Link
+            <button onclick="triggerCopyLink()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3.5 py-2 rounded-lg font-bold flex items-center gap-2 transition-all shadow-md">
+                <i class="fa-solid fa-link text-sm"></i> Copy Link
             </button>
             <button onclick="window.print()" class="bg-slate-800 hover:bg-slate-950 text-white text-xs px-3.5 py-2 rounded-lg font-semibold flex items-center gap-1.5 transition-all">
                 <i class="fa-solid fa-print"></i> Export
@@ -135,7 +81,6 @@
     </div>
 
     <div class="w-full max-w-xl relative">
-        <!-- Floating Spec Bubble Helper -->
         <div id="specBubble" class="spec-popup hidden bg-slate-900 text-white px-3 py-2 rounded-xl shadow-xl text-xs font-medium border border-slate-700/50 flex flex-col gap-0.5">
             <span id="specName" class="font-bold text-blue-400 text-[10px] uppercase tracking-wider">Field Specs</span>
             <div class="flex items-center gap-3">
@@ -145,41 +90,27 @@
         </div>
 
         <div class="bg-white shadow-xl rounded-3xl overflow-hidden border border-slate-100 p-6 space-y-6">
-
-            <!-- Real-Time Inbox Client Simulator (Subject & Preview Text Display) -->
             <div class="bg-slate-50 rounded-2xl p-4 border border-slate-200/60 font-sf space-y-3">
                 <div class="flex items-center justify-between text-[11px] text-slate-400 font-medium pb-2 border-b border-slate-200/50">
-                    <span class="flex items-center gap-1.5"><i class="fa-solid fa-envelope text-slate-400"></i> INBOX SIMULATOR PREVIEW</span>
-                    <span class="bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full text-[9px] font-bold tracking-wide">LIVE SYNCHRONIZATION</span>
+                    <span class="flex items-center gap-1.5"><i class="fa-solid fa-envelope text-slate-400"></i> INBOX SIMULATOR</span>
                 </div>
-                
-                <!-- Email Item Layout -->
                 <div class="flex gap-3">
-                    <!-- Fake Avatar Icon -->
-                    <div id="inboxAvatar" class="w-10 h-10 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center text-xs shrink-0 shadow-sm shadow-blue-600/10">
-                        TG
-                    </div>
-                    <!-- Envelope Contents -->
+                    <div class="w-10 h-10 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center text-xs shrink-0 shadow-sm shadow-blue-600/10">TG</div>
                     <div class="flex-grow min-w-0">
                         <div class="flex justify-between items-baseline">
                             <span class="font-bold text-slate-900 text-[13px]">Think with Google APAC</span>
-                            <span class="text-[11px] text-slate-400">12:20 PM</span>
+                            <span class="text-[11px] text-slate-400">Just now</span>
                         </div>
-                        
-                        <!-- Subject Line (Simulated) -->
                         <div class="text-[13px] font-semibold text-slate-900 truncate flex items-center gap-1.5 mt-0.5">
-                            <span id="inboxSubject" class="text-slate-900 transition-all">Subject Line Placeholder</span>
+                            <span id="inboxSubject" class="text-slate-900">Subject Line Placeholder</span>
                         </div>
-                        
-                        <!-- Preview Text (Simulated) -->
                         <div class="text-[13px] text-slate-500 truncate mt-0.5">
-                            <span id="inboxPreviewText" class="text-slate-500 transition-all">Preview Text Placeholder next to subject line...</span>
+                            <span id="inboxPreviewText" class="text-slate-500">Preview Text Placeholder...</span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Metadata Inline Editors -->
             <div class="bg-slate-50/50 rounded-2xl p-4 border border-slate-100 grid grid-cols-1 gap-4">
                 <div class="relative group">
                     <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Subject Line</label>
@@ -193,41 +124,24 @@
 
             <div class="border-t border-dashed border-slate-200 my-6"></div>
 
-            <!-- Header Logo/Icon Area -->
             <header class="pt-4 pb-2 px-4 text-center space-y-4">
                 <div class="relative mx-auto inline-block">
-                    <!-- Speech bubble badge for comments -->
-                    <button onclick="openComment('logo')" class="comment-badge hidden no-print absolute -top-2 -right-2 bg-amber-500 hover:bg-amber-600 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] shadow-md transition-all">
-                        <i class="fa-regular fa-comment"></i>
-                    </button>
-                    <!-- Logo container -->
                     <div onclick="openImageManager('logo')" class="placeholder-box w-28 h-10 rounded-lg flex flex-col items-center justify-center overflow-hidden border border-slate-200">
-                        <img id="logo-img" class="hidden w-full h-full object-contain p-1" />
+                        <img id="logo-img" class="hidden w-full h-full object-contain p-1" onerror="handleImageError(this)" />
                         <div id="logo-svg" class="flex flex-col items-center justify-center text-slate-400 opacity-60">
-                            <svg width="24" height="24" viewBox="0 0 100 100" class="stroke-current fill-none">
-                                <circle cx="50" cy="50" r="24" stroke-width="2"/>
-                                <circle cx="38" cy="50" r="24" stroke-width="2"/>
-                                <circle cx="62" cy="50" r="24" stroke-width="2"/>
-                            </svg>
+                            <svg width="24" height="24" viewBox="0 0 100 100" class="stroke-current fill-none"><circle cx="50" cy="50" r="24" stroke-width="2"/><circle cx="38" cy="50" r="24" stroke-width="2"/><circle cx="62" cy="50" r="24" stroke-width="2"/></svg>
                         </div>
-                        <div id="logo-badge" class="absolute bottom-0 inset-x-0 bg-amber-500 text-white text-[8px] font-semibold text-center py-0.5 hidden no-print">LOCAL ONLY</div>
                     </div>
                 </div>
 
-                <!-- HERO WAYFINDER -->
                 <div class="relative group">
-                    <button onclick="openComment('preheader')" class="comment-badge hidden no-print absolute -top-1 -right-2 bg-amber-500 hover:bg-amber-600 text-white w-4 h-4 rounded-full flex items-center justify-center text-[8px] shadow-md transition-all">
-                        <i class="fa-regular fa-comment"></i>
-                    </button>
                     <p id="field_wayfinder" contenteditable="true" data-name="Hero wayfinder" data-max="48" data-min="0" data-required="false" class="text-[11px] font-extrabold tracking-widest text-slate-400 uppercase text-center">LOREM IPSUM</p>
                 </div>
 
-                <!-- Eyebrow -->
                 <div class="relative group">
                     <p id="field_eyebrow" contenteditable="true" data-name="Eyebrow" data-max="40" data-min="0" data-required="false" class="text-sm font-semibold text-slate-500 text-center">Max 40 characters (Optional)</p>
                 </div>
 
-                <!-- Hero Headline -->
                 <div class="relative group">
                     <h1 class="text-2xl md:text-3xl font-extrabold leading-tight text-center tracking-tight text-slate-900 space-y-1">
                         <span id="field_headline" contenteditable="true" data-name="Headline" data-max="40" data-min="16" data-required="true" class="block">Lorem ipsum dolor sit</span>
@@ -235,388 +149,217 @@
                     </h1>
                 </div>
 
-                <!-- Hero Body Copy -->
                 <div class="relative group max-w-md mx-auto">
                     <p id="field_description" contenteditable="true" data-name="Description" data-max="115" data-min="55" data-required="false" class="mt-4 text-slate-500 text-sm leading-relaxed text-center">
-                        Lorem ipsum dolor sit amet consectetur. Iaculis integer nisi amet et magnis in ac. Eget id urna nisi ultrices dui egestas vulputate. Viverra porta sit commodo lorem eu augue sed.
+                        Lorem ipsum dolor sit amet consectetur. Iaculis integer nisi amet et magnis in ac. Eget id urna nisi ultrices dui egestas vulputate.
                     </p>
                 </div>
 
-                <!-- Dual CTA Buttons -->
                 <div class="mt-6 flex flex-wrap items-center justify-center gap-4">
                     <div class="cta-wrapper group relative inline-block">
                         <span id="btn_cta1" role="button" contenteditable="true" data-name="CTA 1" data-words="3" data-required="true" class="btn-pill block">Default</span>
-                        <button onclick="toggleButtonVisibility('btn_cta1')" class="no-print absolute -top-2 -right-2 bg-rose-500 hover:bg-rose-600 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] shadow-md transition-all opacity-0 group-hover:opacity-100 focus:opacity-100" title="Hide Button">
-                            <i class="fa-solid fa-trash-can"></i>
-                        </button>
+                        <button onclick="toggleButtonVisibility('btn_cta1')" class="no-print absolute -top-2 -right-2 bg-rose-500 hover:bg-rose-600 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] shadow-md opacity-0 group-hover:opacity-100" title="Hide Button"><i class="fa-solid fa-trash-can"></i></button>
                     </div>
                     <div class="cta-wrapper group relative inline-block">
                         <span id="btn_cta2" role="button" contenteditable="true" data-name="CTA 2" data-words="3" data-required="false" class="btn-pill-secondary block">Default</span>
-                        <button onclick="toggleButtonVisibility('btn_cta2')" class="no-print absolute -top-2 -right-2 bg-rose-500 hover:bg-rose-600 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] shadow-md transition-all opacity-0 group-hover:opacity-100 focus:opacity-100" title="Hide Button">
-                            <i class="fa-solid fa-trash-can"></i>
-                        </button>
+                        <button onclick="toggleButtonVisibility('btn_cta2')" class="no-print absolute -top-2 -right-2 bg-rose-500 hover:bg-rose-600 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] shadow-md opacity-0 group-hover:opacity-100" title="Hide Button"><i class="fa-solid fa-trash-can"></i></button>
                     </div>
                 </div>
 
-                <!-- Disclaimer Text -->
                 <div class="relative group">
                     <p id="field_disclaimer" contenteditable="true" data-name="Disclaimer" data-max="115" data-min="55" data-required="false" class="mt-4 text-[10px] text-slate-400 italic text-center">*disclaimer text lorem ipsum</p>
                 </div>
             </header>
 
-            <!-- Hero Centered Image Media Block (Clover Shape representation) -->
             <div class="px-2">
                 <div onclick="openImageManager('hero')" class="placeholder-box w-full aspect-[16/9] rounded-3xl flex items-center justify-center relative shadow-sm overflow-hidden">
-                    <img id="hero-img" class="hidden w-full h-full object-cover" />
+                    <img id="hero-img" class="hidden w-full h-full object-cover" onerror="handleImageError(this)" />
                     <div id="hero-svg" class="flex items-center justify-center">
                         <svg width="100" height="100" viewBox="0 0 100 100" class="text-slate-300 opacity-80 stroke-current fill-none">
-                            <circle cx="50" cy="50" r="32" stroke-width="1.5"/>
-                            <circle cx="34" cy="50" r="32" stroke-width="1.5"/>
-                            <circle cx="66" cy="50" r="32" stroke-width="1.5"/>
-                            <circle cx="50" cy="34" r="32" stroke-width="1.5"/>
-                            <circle cx="50" cy="66" r="32" stroke-width="1.5"/>
+                            <circle cx="50" cy="50" r="32" stroke-width="1.5"/><circle cx="34" cy="50" r="32" stroke-width="1.5"/><circle cx="66" cy="50" r="32" stroke-width="1.5"/><circle cx="50" cy="34" r="32" stroke-width="1.5"/><circle cx="50" cy="66" r="32" stroke-width="1.5"/>
                         </svg>
                     </div>
-                    <!-- Dimension Indicator -->
-                    <span class="absolute bottom-3 right-3 text-[9px] bg-slate-900/60 text-white font-mono px-2 py-1 rounded-full uppercase tracking-wider no-print">Ratio 1:1 (Export 2x)</span>
-                    <div id="hero-badge" class="absolute bottom-3 left-3 bg-amber-500 text-white text-[9px] font-bold px-2.5 py-0.5 rounded-full hidden no-print">LOCAL ONLY</div>
+                    <span class="absolute bottom-3 right-3 text-[9px] bg-slate-900/60 text-white font-mono px-2 py-1 rounded-full uppercase no-print">Ratio 1:1</span>
                 </div>
             </div>
 
-            <!-- Feature Stacks Section -->
             <section class="px-4 py-6 space-y-8">
                 <h2 id="field_feature_title" contenteditable="true" data-name="Feature Title" data-max="65" data-min="10" data-required="true" class="text-xl font-bold text-center text-slate-900">Headline goes here</h2>
-                
                 <div class="space-y-6 max-w-md mx-auto">
-                    <!-- Feature #1 -->
                     <div class="flex gap-4 items-start relative group">
                         <div onclick="openImageManager('ft1')" class="placeholder-box shrink-0 w-12 h-12 rounded-xl flex items-center justify-center shadow-sm overflow-hidden">
-                            <img id="ft1-img" class="hidden w-full h-full object-cover" />
+                            <img id="ft1-img" class="hidden w-full h-full object-cover" onerror="handleImageError(this)" />
                             <div id="ft1-svg" class="flex items-center justify-center">
-                                <svg width="22" height="22" viewBox="0 0 100 100" class="text-slate-400 opacity-60 stroke-current fill-none">
-                                    <circle cx="50" cy="50" r="30" stroke-width="2"/>
-                                    <circle cx="35" cy="50" r="30" stroke-width="2"/>
-                                    <circle cx="65" cy="50" r="30" stroke-width="2"/>
-                                </svg>
+                                <svg width="22" height="22" viewBox="0 0 100 100" class="text-slate-400 stroke-current fill-none"><circle cx="50" cy="50" r="30" stroke-width="2"/><circle cx="35" cy="50" r="30" stroke-width="2"/><circle cx="65" cy="50" r="30" stroke-width="2"/></svg>
                             </div>
-                            <div id="ft1-badge" class="absolute bottom-0 inset-x-0 bg-amber-500 text-white text-[7px] font-semibold text-center py-0.5 hidden no-print">LOCAL ONLY</div>
                         </div>
                         <div class="flex-grow space-y-1">
                             <h3 id="field_ft1_title" contenteditable="true" data-name="Title #1" data-max="65" data-min="10" data-required="true" class="font-bold text-slate-900 text-sm">Subheadline</h3>
-                            <p id="field_ft1_desc" contenteditable="true" data-name="Data #1" data-max="95" data-min="10" data-required="false" class="text-xs text-slate-500 leading-relaxed">
-                                Lorem ipsum dolor sit amet consectetur. Sodales convallis ullamcorper aenean eget blandit quis eget <span class="text-blue-600 underline">semper sociis</span>.
-                            </p>
+                            <p id="field_ft1_desc" contenteditable="true" data-name="Data #1" data-max="95" data-min="10" data-required="false" class="text-xs text-slate-500 leading-relaxed">Lorem ipsum dolor sit amet consectetur.</p>
                         </div>
                     </div>
-
-                    <!-- Feature #2 -->
                     <div class="flex gap-4 items-start relative group">
                         <div onclick="openImageManager('ft2')" class="placeholder-box shrink-0 w-12 h-12 rounded-xl flex items-center justify-center shadow-sm overflow-hidden">
-                            <img id="ft2-img" class="hidden w-full h-full object-cover" />
+                            <img id="ft2-img" class="hidden w-full h-full object-cover" onerror="handleImageError(this)" />
                             <div id="ft2-svg" class="flex items-center justify-center">
-                                <svg width="22" height="22" viewBox="0 0 100 100" class="text-slate-400 opacity-60 stroke-current fill-none">
-                                    <circle cx="50" cy="50" r="30" stroke-width="2"/>
-                                    <circle cx="35" cy="50" r="30" stroke-width="2"/>
-                                    <circle cx="65" cy="50" r="30" stroke-width="2"/>
-                                </svg>
+                                <svg width="22" height="22" viewBox="0 0 100 100" class="text-slate-400 stroke-current fill-none"><circle cx="50" cy="50" r="30" stroke-width="2"/><circle cx="35" cy="50" r="30" stroke-width="2"/><circle cx="65" cy="50" r="30" stroke-width="2"/></svg>
                             </div>
-                            <div id="ft2-badge" class="absolute bottom-0 inset-x-0 bg-amber-500 text-white text-[7px] font-semibold text-center py-0.5 hidden no-print">LOCAL ONLY</div>
                         </div>
                         <div class="flex-grow space-y-1">
                             <h3 id="field_ft2_title" contenteditable="true" data-name="Title #2" data-max="65" data-min="10" data-required="true" class="font-bold text-slate-900 text-sm">Subheadline</h3>
-                            <p id="field_ft2_desc" contenteditable="true" data-name="Data #2" data-max="95" data-min="10" data-required="false" class="text-xs text-slate-500 leading-relaxed">
-                                Lorem ipsum dolor sit amet consectetur. Sodales convallis ullamcorper aenean eget blandit quis eget <span class="text-blue-600 underline">semper sociis</span>.
-                            </p>
+                            <p id="field_ft2_desc" contenteditable="true" data-name="Data #2" data-max="95" data-min="10" data-required="false" class="text-xs text-slate-500 leading-relaxed">Lorem ipsum dolor sit amet consectetur.</p>
                         </div>
                     </div>
-
-                    <!-- Feature #3 -->
                     <div class="flex gap-4 items-start relative group">
                         <div onclick="openImageManager('ft3')" class="placeholder-box shrink-0 w-12 h-12 rounded-xl flex items-center justify-center shadow-sm overflow-hidden">
-                            <img id="ft3-img" class="hidden w-full h-full object-cover" />
+                            <img id="ft3-img" class="hidden w-full h-full object-cover" onerror="handleImageError(this)" />
                             <div id="ft3-svg" class="flex items-center justify-center">
-                                <svg width="22" height="22" viewBox="0 0 100 100" class="text-slate-400 opacity-60 stroke-current fill-none">
-                                    <circle cx="50" cy="50" r="30" stroke-width="2"/>
-                                    <circle cx="35" cy="50" r="30" stroke-width="2"/>
-                                    <circle cx="65" cy="50" r="30" stroke-width="2"/>
-                                </svg>
+                                <svg width="22" height="22" viewBox="0 0 100 100" class="text-slate-400 stroke-current fill-none"><circle cx="50" cy="50" r="30" stroke-width="2"/><circle cx="35" cy="50" r="30" stroke-width="2"/><circle cx="65" cy="50" r="30" stroke-width="2"/></svg>
                             </div>
-                            <div id="ft3-badge" class="absolute bottom-0 inset-x-0 bg-amber-500 text-white text-[7px] font-semibold text-center py-0.5 hidden no-print">LOCAL ONLY</div>
                         </div>
                         <div class="flex-grow space-y-1">
                             <h3 id="field_ft3_title" contenteditable="true" data-name="Title #3" data-max="65" data-min="10" data-required="true" class="font-bold text-slate-900 text-sm">Subheadline</h3>
-                            <p id="field_ft3_desc" contenteditable="true" data-name="Data #3" data-max="95" data-min="10" data-required="false" class="text-xs text-slate-500 leading-relaxed">
-                                Lorem ipsum dolor sit amet consectetur. Sodales convallis ullamcorper aenean eget blandit quis eget <span class="text-blue-600 underline">semper sociis</span>.
-                            </p>
+                            <p id="field_ft3_desc" contenteditable="true" data-name="Data #3" data-max="95" data-min="10" data-required="false" class="text-xs text-slate-500 leading-relaxed">Lorem ipsum dolor sit amet consectetur.</p>
                         </div>
                     </div>
                 </div>
             </section>
 
-            <!-- Bottom Conversional Card Section (Closer) -->
             <section class="p-4 pt-8">
                 <div class="bg-slate-50/50 rounded-3xl p-6 text-center border border-slate-100 flex flex-col items-center space-y-4">
-                    <!-- Closer Icon -->
                     <div onclick="openImageManager('closer')" class="placeholder-box w-12 h-12 rounded-xl flex items-center justify-center shadow-sm overflow-hidden">
-                        <img id="closer-img" class="hidden w-full h-full object-cover" />
-                        <div id="closer-svg" class="flex items-center justify-center">
-                            <svg width="24" height="24" viewBox="0 0 100 100" class="text-slate-400 opacity-60 stroke-current fill-none">
-                                <circle cx="50" cy="50" r="30" stroke-width="2"/>
-                                <circle cx="35" cy="50" r="30" stroke-width="2"/>
-                                <circle cx="65" cy="50" r="30" stroke-width="2"/>
-                            </svg>
-                        </div>
-                        <div id="closer-badge" class="absolute bottom-0 inset-x-0 bg-amber-500 text-white text-[7px] font-semibold text-center py-0.5 hidden no-print">LOCAL ONLY</div>
+                        <img id="closer-img" class="hidden w-full h-full object-cover" onerror="handleImageError(this)" />
+                        <div id="closer-svg" class="flex items-center justify-center"><i class="fa-solid fa-plus text-slate-300"></i></div>
                     </div>
-
-                    <!-- Closer Subheadline -->
-                    <h2 id="field_closer_sub" contenteditable="true" data-name="Subheadline" data-max="60" data-min="16" data-required="true" class="text-lg font-extrabold text-slate-900 max-w-sm">
-                        Lorem ipsum dolor sit amet consectetur
-                    </h2>
-
-                    <!-- Closer Body Copy -->
-                    <p id="field_closer_desc" contenteditable="true" data-name="Description" data-max="200" data-min="55" data-required="false" class="text-xs text-slate-500 leading-relaxed max-w-sm">
-                        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Tincidunt lorem id lorem arcu, rhoncus nibh faucibus. Integer nulla gravida amet dolor tellus.
-                    </p>
-
-                    <!-- Closer CTA Button -->
-                    <div class="pt-2">
-                        <div class="cta-wrapper group relative inline-block">
-                            <span id="btn_closer_cta" role="button" contenteditable="true" data-name="CTA" data-words="3" data-required="true" class="btn-pill-secondary border-blue-500/30 px-8 py-2 text-sm block">Default</span>
-                            <button onclick="toggleButtonVisibility('btn_closer_cta')" class="no-print absolute -top-2 -right-2 bg-rose-500 hover:bg-rose-600 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] shadow-md transition-all opacity-0 group-hover:opacity-100 focus:opacity-100" title="Hide Button">
-                                <i class="fa-solid fa-trash-can"></i>
-                            </button>
-                        </div>
+                    <h2 id="field_closer_sub" contenteditable="true" data-name="Subheadline" data-max="60" data-min="16" data-required="true" class="text-lg font-extrabold text-slate-900 max-w-sm">Lorem ipsum dolor sit amet</h2>
+                    <p id="field_closer_desc" contenteditable="true" data-name="Description" data-max="200" data-min="55" data-required="false" class="text-xs text-slate-500 leading-relaxed max-w-sm">Lorem ipsum dolor sit amet consectetur.</p>
+                    <div class="cta-wrapper group relative inline-block">
+                        <span id="btn_closer_cta" role="button" contenteditable="true" data-name="CTA" data-words="3" data-required="true" class="btn-pill-secondary px-8 py-2 text-sm block">Default</span>
+                        <button onclick="toggleButtonVisibility('btn_closer_cta')" class="no-print absolute -top-2 -right-2 bg-rose-500 hover:bg-rose-600 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] opacity-0 group-hover:opacity-100"><i class="fa-solid fa-trash-can"></i></button>
                     </div>
                 </div>
             </section>
-
         </div>
     </div>
 
-    <!-- Image Upload and URL Manager Modal (Popup) -->
+    <!-- Image Sources Modal Popup Container -->
     <div id="imageModal" class="no-print fixed inset-0 bg-slate-950/45 flex items-center justify-center p-4 z-50 hidden backdrop-blur-sm">
         <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl border border-slate-200 overflow-hidden">
             <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
-                <span class="text-xs font-bold text-slate-800 flex items-center gap-2">
-                    <i class="fa-regular fa-image text-blue-500 text-sm"></i> Manage Image Source
-                </span>
-                <button onclick="closeImageManager()" class="text-slate-400 hover:text-slate-600 text-lg">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
+                <span class="text-xs font-bold text-slate-800 flex items-center gap-2"><i class="fa-regular fa-image text-blue-500 text-sm"></i> Add Image</span>
+                <button onclick="closeImageManager()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="p-5 space-y-4 text-xs">
                 <div>
-                    <label class="block font-bold text-slate-700 mb-1">Option A: Paste Web Link (Saves permanently to Share Links!)</label>
-                    <input type="text" id="imgModalUrl" placeholder="https://example.com/your-image.png" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 outline-none focus:border-blue-500 focus:bg-white transition-all">
-                    <div class="mt-2 bg-blue-50 border border-blue-100 rounded-lg p-2.5">
-                        <p class="text-[10px] font-bold text-blue-800 mb-1 leading-tight"><i class="fa-brands fa-google-drive mr-1"></i> Google Drive Tip:</p>
-                        <p class="text-[9px] text-blue-700 leading-normal italic">Select 'Share' in Drive > Copy Link. To make it show here, ensure it's 'Anyone with the link' and use the link format: <code class="bg-white px-1 py-0.5 rounded">https://lh3.googleusercontent.com/d/[FILE_ID]</code></p>
-                    </div>
+                    <label class="block font-bold text-slate-700 mb-1">Paste Google Drive Share Link (Auto-Fixing Enabled!)</label>
+                    <input type="text" id="imgModalUrl" placeholder="Paste your full Google Drive Link here..." class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 outline-none focus:border-blue-500 focus:bg-white transition-all">
                 </div>
-                <div class="relative flex py-2 items-center">
-                    <div class="flex-grow border-t border-slate-100"></div>
-                    <span class="flex-shrink mx-4 text-slate-400 font-bold uppercase tracking-wider text-[9px]">or</span>
-                    <div class="flex-grow border-t border-slate-100"></div>
-                </div>
+                <div class="relative flex py-2 items-center"><div class="flex-grow border-t border-slate-100"></div><span class="flex-shrink mx-4 text-slate-400 text-[9px] uppercase font-bold tracking-widest">or</span><div class="flex-grow border-t border-slate-100"></div></div>
                 <div>
-                    <label class="block font-bold text-slate-700 mb-2">Option B: Upload File (Temporary preview only)</label>
+                    <label class="block font-bold text-slate-700 mb-2">Upload Local Image (Temporary Preview Only)</label>
                     <input type="file" id="imgModalFile" accept="image/*" class="w-full text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
-                    <p class="text-[10px] text-amber-600 mt-1.5 leading-relaxed font-medium"><i class="fa-solid fa-triangle-exclamation"></i> Picking a file from your 'Google Drive' folder on your Chromebook counts as an upload. It stays 'Local Only' because the file is too big to save in a share link. Use Option A above for cloud links.</p>
                 </div>
                 <div class="pt-2 flex gap-3">
-                    <button onclick="saveImageSelection()" class="flex-grow bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl transition-all shadow-md shadow-blue-500/20">
-                        Apply Changes
-                    </button>
-                    <button onclick="clearImageSelection()" class="bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold px-4 py-2.5 rounded-xl transition-all">
-                        Remove
-                    </button>
+                    <button onclick="saveImageSelection()" class="flex-grow bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl transition-all">Apply to Design</button>
+                    <button onclick="clearImageSelection()" class="bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold px-4 py-2.5 rounded-xl transition-all">Remove</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Floating Comment Sidebar Panel (Non-Printable) -->
-    <aside id="commentSidebar" class="no-print fixed top-0 right-0 h-full w-[350px] bg-white border-l border-slate-200 shadow-2xl z-50 flex flex-col translate-x-full transition-transform duration-300">
-        <div class="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
-            <span class="text-xs font-bold text-slate-800 flex items-center gap-2">
-                <i class="fa-solid fa-comments text-blue-500"></i> Section Feedback Comments
-            </span>
-            <button onclick="toggleComments()" class="text-slate-400 hover:text-slate-600 text-sm p-1">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
-        </div>
-        
-        <!-- Live Comment Thread List -->
-        <div id="commentsList" class="flex-grow p-4 overflow-y-auto space-y-4 text-xs">
-            <!-- Dynamically populated comments appear here -->
-            <p class="text-slate-400 text-center py-8">No comments left yet. Click speech bubbles next to components to tag feedback!</p>
-        </div>
-
-        <!-- Inline Comment Composer Area -->
-        <div class="p-4 border-t border-slate-100 space-y-2 bg-slate-50">
-            <span id="activeContextTag" class="text-[10px] font-bold text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full uppercase inline-block">Reviewing: General Page</span>
-            <input type="text" id="reviewerName" placeholder="Your Name" class="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs focus:border-blue-500 outline-none">
-            <textarea id="commentBody" placeholder="Leave structural or copy change requests..." rows="3" class="w-full bg-white border border-slate-200 rounded-lg p-2.5 text-xs focus:border-blue-500 outline-none"></textarea>
-            <button onclick="addComment()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-lg text-xs transition-all">
-                Post Comment
-            </button>
-        </div>
-    </aside>
-
     <script>
-        // State variables
-        let comments = [];
-        let activeComponentContext = 'general';
-        let showCommentsSidebar = false;
-        
-        // Image Management States
         let currentTargetImageId = '';
-        let imageSources = {
-            logo: { type: 'none', value: '' },
-            hero: { type: 'none', value: '' },
-            ft1: { type: 'none', value: '' },
-            ft2: { type: 'none', value: '' },
-            ft3: { type: 'none', value: '' },
-            closer: { type: 'none', value: '' }
-        };
+        let imageSources = { logo: { type: 'none', value: '' }, hero: { type: 'none', value: '' }, ft1: { type: 'none', value: '' }, ft2: { type: 'none', value: '' }, ft3: { type: 'none', value: '' }, closer: { type: 'none', value: '' } };
 
-        // Initialize Workspace Bindings
         window.onload = function() {
             setupSpecTrackers();
             syncInboxPreviews();
-            loadStateFromURL();
+            
+            // Check if loading straight from an shared hash URL or fallback to memory
+            if (window.location.hash.startsWith('#state=')) {
+                loadStateFromURL(window.location.hash);
+            } else {
+                checkLocalWorkspaceBackup();
+            }
+            
             setupAutoSaveTriggers();
         };
 
-        // Auto Save Event Trigger mapping
         function setupAutoSaveTriggers() {
-            const inputs = document.querySelectorAll('[contenteditable="true"]');
-            inputs.forEach(el => {
-                el.addEventListener('input', () => {
-                    syncInboxPreviews();
-                    saveStateToURL(true); // silent
+            document.querySelectorAll('[contenteditable="true"]').forEach(el => {
+                el.addEventListener('input', () => { 
+                    syncInboxPreviews(); 
+                    saveStateToURL(true); 
                 });
             });
         }
 
-        // Handle button hides dynamically
+        // --- NEW LOCAL BACKUP STORAGE CODE ---
+        function checkLocalWorkspaceBackup() {
+            const backup = localStorage.getItem('edm_workspace_backup');
+            if (backup) {
+                document.getElementById('recoveryBanner').classList.remove('hidden');
+            }
+        }
+
+        function applyBackup() {
+            const backup = localStorage.getItem('edm_workspace_backup');
+            if (backup) {
+                loadStateFromURL('#state=' + backup);
+                document.getElementById('recoveryBanner').classList.add('hidden');
+                showToast("Workspace backup successfully restored!");
+            }
+        }
+
+        function dismissBackup() {
+            localStorage.removeItem('edm_workspace_backup');
+            document.getElementById('recoveryBanner').classList.add('hidden');
+        }
+        // -------------------------------------
+
         function toggleButtonVisibility(id) {
-            const buttonElement = document.getElementById(id);
-            if (buttonElement) {
-                const wrapper = buttonElement.closest('.cta-wrapper');
-                if (wrapper) {
-                    wrapper.classList.add('hidden');
-                }
-            }
+            const el = document.getElementById(id).closest('.cta-wrapper');
+            el.classList.toggle('hidden');
             updateRestoreButtonVisibility();
             saveStateToURL(true);
         }
 
-        // Restore all interactive buttons
         function restoreAllButtons() {
-            document.querySelectorAll('.cta-wrapper').forEach(wrapper => {
-                wrapper.classList.remove('hidden');
-            });
+            document.querySelectorAll('.cta-wrapper').forEach(w => w.classList.remove('hidden'));
             updateRestoreButtonVisibility();
             saveStateToURL(true);
         }
 
-        // Check helper logic for the restore banner button
         function updateRestoreButtonVisibility() {
-            const hiddenButtons = document.querySelectorAll('.cta-wrapper.hidden');
-            const restoreBtn = document.getElementById('restoreButtonsBtn');
-            if (hiddenButtons.length > 0) {
-                restoreBtn.classList.remove('hidden');
-            } else {
-                restoreBtn.classList.add('hidden');
-            }
+            const hidden = document.querySelectorAll('.cta-wrapper.hidden').length;
+            document.getElementById('restoreButtonsBtn').classList.toggle('hidden', hidden === 0);
         }
 
-        // Real-Time character count / input boundary feedback
-        function setupSpecTrackers() {
-            const specElements = document.querySelectorAll('[contenteditable="true"]');
-            const bubble = document.getElementById('specBubble');
-
-            specElements.forEach(el => {
-                el.addEventListener('focus', function() {
-                    const name = el.getAttribute('data-name');
-                    const max = el.getAttribute('data-max');
-                    const min = el.getAttribute('data-min');
-                    const words = el.getAttribute('data-words');
-
-                    if (name) {
-                        document.getElementById('specName').innerText = name;
-                        if (words) {
-                            document.getElementById('specRules').innerText = `Max Word Count: ${words}`;
-                        } else {
-                            document.getElementById('specRules').innerText = `Min ${min}, Max ${max} Chars`;
-                        }
-                        updateCounter(el);
-                        
-                        // Reposition bubble
-                        const rect = el.getBoundingClientRect();
-                        bubble.style.top = `${rect.top + window.scrollY - bubble.offsetHeight - 12}px`;
-                        bubble.style.left = `${rect.left + window.scrollX + (rect.width/2)}px`;
-                        bubble.classList.remove('hidden');
-                    }
-                });
-
-                el.addEventListener('input', function() {
-                    updateCounter(el);
-                });
-
-                el.addEventListener('blur', function() {
-                    bubble.classList.add('hidden');
-                });
-            });
+        function openImageManager(id) {
+            currentTargetImageId = id;
+            document.getElementById('imgModalUrl').value = imageSources[id].type === 'url' ? imageSources[id].value : '';
+            document.getElementById('imgModalFile').value = '';
+            document.getElementById('imageModal').classList.remove('hidden');
         }
 
-        // Live Subject / Preview text simulation
-        function syncInboxPreviews() {
-            const subjectVal = document.getElementById('field_subject').innerText;
-            const previewVal = document.getElementById('field_preview_text').innerText;
-
-            document.getElementById('inboxSubject').innerText = subjectVal || 'Subject Line Placeholder';
-            document.getElementById('inboxPreviewText').innerText = previewVal || 'Preview Text Placeholder next to subject line...';
-        }
-
-        // Image Manager Overlay Modal Logic
-        function openImageManager(targetId) {
-            currentTargetImageId = targetId;
-            const state = imageSources[targetId];
-            
-            // Populate dialog inputs
-            const urlInput = document.getElementById('imgModalUrl');
-            const fileInput = document.getElementById('imgModalFile');
-            
-            urlInput.value = state.type === 'url' ? state.value : '';
-            fileInput.value = ''; // clear file picker
-
-            const modal = document.getElementById('imageModal');
-            modal.classList.remove('hidden');
-        }
-
-        function closeImageManager() {
-            document.getElementById('imageModal').classList.add('hidden');
-        }
+        function closeImageManager() { document.getElementById('imageModal').classList.add('hidden'); }
 
         function saveImageSelection() {
-            const urlInput = document.getElementById('imgModalUrl').value.trim();
+            let val = document.getElementById('imgModalUrl').value.trim();
             const fileInput = document.getElementById('imgModalFile');
 
             if (fileInput.files && fileInput.files[0]) {
-                // If local file selected
                 const reader = new FileReader();
-                reader.onload = function(e) {
-                    applyImageToElement(currentTargetImageId, 'local', e.target.result);
-                    closeImageManager();
-                    saveStateToURL(true);
-                };
+                reader.onload = (e) => { applyImageToElement(currentTargetImageId, 'local', e.target.result); closeImageManager(); saveStateToURL(true); };
                 reader.readAsDataURL(fileInput.files[0]);
-            } else if (urlInput !== '') {
-                // If Web URL provided
-                applyImageToElement(currentTargetImageId, 'url', urlInput);
+            } else if (val) {
+                if (val.includes('drive.google.com')) {
+                    const idMatch = val.match(/\/d\/([^\/?]+)/) || val.match(/id=([^\&]+)/);
+                    if (idMatch && idMatch[1]) {
+                        val = `https://drive.google.com/uc?export=view&id=${idMatch[1]}`;
+                    }
+                }
+                applyImageToElement(currentTargetImageId, 'url', val);
                 closeImageManager();
                 saveStateToURL(true);
             } else {
@@ -624,282 +367,168 @@
             }
         }
 
-        function clearImageSelection() {
-            applyImageToElement(currentTargetImageId, 'none', '');
-            closeImageManager();
-            saveStateToURL(true);
-        }
-
-        function applyImageToElement(targetId, type, value) {
-            imageSources[targetId] = { type: type, value: value };
-            
-            const imgEl = document.getElementById(`${targetId}-img`);
-            const svgEl = document.getElementById(`${targetId}-svg`);
-            const badgeEl = document.getElementById(`${targetId}-badge`);
-
-            if (type === 'none' || value === '') {
-                imgEl.classList.add('hidden');
-                imgEl.src = '';
-                svgEl.classList.remove('hidden');
-                if (badgeEl) badgeEl.classList.add('hidden');
-            } else {
-                imgEl.src = value;
-                imgEl.classList.remove('hidden');
-                svgEl.classList.add('hidden');
-                
-                // Show warn badge for temporary local files
-                if (badgeEl) {
-                    if (type === 'local') {
-                        badgeEl.classList.remove('hidden');
-                    } else {
-                        badgeEl.classList.add('hidden');
-                    }
+        function handleImageError(img) {
+            if (img.src && img.src.includes('drive.google.com')) {
+                const idMatch = img.src.match(/id=([^\&]+)/);
+                if (idMatch && idMatch[1]) {
+                    img.src = `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w1000`;
                 }
             }
         }
 
-        // Live boundary count checkers
+        function applyImageToElement(id, type, val) {
+            imageSources[id] = { type, value: val };
+            const imgEl = document.getElementById(`${id}-img`);
+            const svgEl = document.getElementById(`${id}-svg`);
+            if (!val) { imgEl.classList.add('hidden'); svgEl.classList.remove('hidden'); }
+            else { imgEl.src = val; imgEl.classList.remove('hidden'); svgEl.classList.add('hidden'); }
+        }
+
+        function clearImageSelection() { applyImageToElement(currentTargetImageId, 'none', ''); closeImageManager(); saveStateToURL(true); }
+
+        function setupSpecTrackers() {
+            const bubble = document.getElementById('specBubble');
+            document.querySelectorAll('[contenteditable="true"]').forEach(el => {
+                el.addEventListener('focus', () => {
+                    const name = el.getAttribute('data-name');
+                    const max = el.getAttribute('data-max');
+                    const min = el.getAttribute('data-min');
+                    const words = el.getAttribute('data-words');
+                    if (name) {
+                        document.getElementById('specName').innerText = name;
+                        document.getElementById('specRules').innerText = words ? `Max Word Count: ${words}` : `Min ${min}, Max ${max} Chars`;
+                        updateCounter(el);
+                        const r = el.getBoundingClientRect();
+                        bubble.style.top = `${r.top + window.scrollY - 40}px`;
+                        bubble.style.left = `${r.left + window.scrollX + (r.width / 2)}px`;
+                        bubble.classList.remove('hidden');
+                    }
+                });
+                el.addEventListener('input', () => updateCounter(el));
+                el.addEventListener('blur', () => bubble.classList.add('hidden'));
+            });
+        }
+
         function updateCounter(el) {
-            const length = el.innerText.trim().length;
-            const max = el.getAttribute('data-max');
-            const min = el.getAttribute('data-min');
-            const words = el.getAttribute('data-words');
+            const txt = el.innerText.trim();
+            const len = txt.length;
+            const max = parseInt(el.getAttribute('data-max'));
+            const words = parseInt(el.getAttribute('data-words'));
             const counter = document.getElementById('specCounter');
 
             if (words) {
-                const wordCount = el.innerText.trim().split(/\s+/).filter(w => w.length).length;
-                counter.innerText = `${wordCount}/${words} words`;
-                if (wordCount > words) {
-                    counter.className = "bg-red-500 text-white px-1.5 py-0.5 rounded text-[11px] font-mono font-bold animate-pulse";
-                    el.classList.add('border-red-300', 'bg-red-50/20');
-                } else {
-                    counter.className = "bg-emerald-500 text-white px-1.5 py-0.5 rounded text-[11px] font-mono font-bold";
-                    el.classList.remove('border-red-300', 'bg-red-50/20');
-                }
-            } else if (max) {
-                counter.innerText = `${length}/${max} chars`;
-                const intMin = parseInt(min) || 0;
-                const intMax = parseInt(max);
-
-                if (length > intMax || length < intMin) {
-                    counter.className = "bg-red-500 text-white px-1.5 py-0.5 rounded text-[11px] font-mono font-bold animate-pulse";
-                    el.classList.add('border-red-300', 'bg-red-50/20');
-                } else {
-                    counter.className = "bg-emerald-500 text-white px-1.5 py-0.5 rounded text-[11px] font-mono font-bold";
-                    el.classList.remove('border-red-300', 'bg-red-50/20');
-                }
-            }
-        }
-
-        // Toggle commenting workflows
-        function toggleComments() {
-            const sidebar = document.getElementById('commentSidebar');
-            const toggler = document.getElementById('commentToggleBtn');
-            const badges = document.querySelectorAll('.comment-badge');
-            
-            showCommentsSidebar = !showCommentsSidebar;
-
-            if (showCommentsSidebar) {
-                sidebar.classList.remove('translate-x-full');
-                toggler.className = "bg-amber-100 hover:bg-amber-200 text-amber-700 text-xs px-3.5 py-2 rounded-lg font-bold flex items-center gap-2 transition-all border border-amber-300";
-                badges.forEach(b => b.classList.remove('hidden'));
+                const count = txt.split(/\s+/).filter(w => w).length;
+                counter.innerText = `${count}/${words} words`;
+                counter.className = count > words ? "bg-red-500 text-white px-1.5 py-0.5 rounded" : "bg-emerald-500 text-white px-1.5 py-0.5 rounded";
             } else {
-                sidebar.classList.add('translate-x-full');
-                toggler.className = "bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs px-3.5 py-2 rounded-lg font-semibold flex items-center gap-2 transition-all";
-                badges.forEach(b => b.classList.add('hidden'));
+                counter.innerText = `${len}/${max} chars`;
+                counter.className = len > max ? "bg-red-500 text-white px-1.5 py-0.5 rounded" : "bg-emerald-500 text-white px-1.5 py-0.5 rounded";
             }
         }
 
-        function openComment(context) {
-            activeComponentContext = context;
-            document.getElementById('activeContextTag').innerText = `Reviewing: ${context}`;
-            if (!showCommentsSidebar) toggleComments();
-            document.getElementById('commentBody').focus();
+        function syncInboxPreviews() {
+            document.getElementById('inboxSubject').innerText = document.getElementById('field_subject').innerText;
+            document.getElementById('inboxPreviewText').innerText = document.getElementById('field_preview_text').innerText;
         }
 
-        function addComment() {
-            const name = document.getElementById('reviewerName').value || 'Anonymous Reviewer';
-            const body = document.getElementById('commentBody').value;
-
-            if (!body) return;
-
-            comments.push({
-                context: activeComponentContext,
-                author: name,
-                text: body,
-                date: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+        function saveStateToURL(silent = false) {
+            // Read hidden status elements safely
+            const hiddenIds = [];
+            document.querySelectorAll('.cta-wrapper.hidden').forEach(el => {
+                const insideBtn = el.querySelector('[id]');
+                if(insideBtn) hiddenIds.push(insideBtn.id);
             });
 
-            document.getElementById('commentBody').value = '';
-            renderComments();
-            saveStateToURL(true);
-        }
-
-        function renderComments() {
-            const container = document.getElementById('commentsList');
-            if (comments.length === 0) {
-                container.innerHTML = `<p class="text-slate-400 text-center py-8">No comments left yet. Click speech bubbles next to components to tag feedback!</p>`;
-                return;
-            }
-
-            container.innerHTML = comments.map(c => `
-                <div class="bg-slate-50 border border-slate-200/60 rounded-xl p-3 space-y-1.5 shadow-sm">
-                    <div class="flex items-center justify-between">
-                        <span class="font-extrabold text-slate-800">${escapeHTML(c.author)}</span>
-                        <span class="text-[9px] bg-slate-200/80 text-slate-500 px-1.5 py-0.5 rounded font-mono">${c.date}</span>
-                    </div>
-                    <span class="text-[9px] font-bold text-amber-600 bg-amber-50 border border-amber-200/50 px-2 py-0.5 rounded-full uppercase tracking-wider block w-fit">
-                        ${escapeHTML(c.context)}
-                    </span>
-                    <p class="text-slate-600 leading-normal">${escapeHTML(c.text)}</p>
-                </div>
-            `).join('');
-        }
-
-        function escapeHTML(str) {
-            return str.replace(/[&<>'"]/g, 
-                tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
-            );
-        }
-
-        // State Packaging System
-        function saveStateToURL(silent = false) {
-            // Package text copy values
             const state = {
                 subject: document.getElementById('field_subject').innerText,
                 preview: document.getElementById('field_preview_text').innerText,
                 wayfinder: document.getElementById('field_wayfinder').innerText,
                 eyebrow: document.getElementById('field_eyebrow').innerText,
                 headline: document.getElementById('field_headline').innerText,
-                headline_accent: document.getElementById('field_headline_accent').innerText,
-                description: document.getElementById('field_description').innerText,
-                disclaimer: document.getElementById('field_disclaimer').innerText,
-                closer_sub: document.getElementById('field_closer_sub').innerText,
-                closer_desc: document.getElementById('field_closer_desc').innerText,
-                
-                // Package button visibility states
-                cta1_hidden: document.getElementById('btn_cta1').closest('.cta-wrapper').classList.contains('hidden'),
-                cta2_hidden: document.getElementById('btn_cta2').closest('.cta-wrapper').classList.contains('hidden'),
-                closer_cta_hidden: document.getElementById('btn_closer_cta').closest('.cta-wrapper').classList.contains('hidden'),
-                
-                // Package features elements
-                features: {
-                    title: document.getElementById('field_feature_title').innerText,
-                    f1_title: document.getElementById('field_ft1_title').innerText,
-                    f1_desc: document.getElementById('field_ft1_desc').innerText,
-                    f2_title: document.getElementById('field_ft2_title').innerText,
-                    f2_desc: document.getElementById('field_ft2_desc').innerText,
-                    f3_title: document.getElementById('field_ft3_title').innerText,
-                    f3_desc: document.getElementById('field_ft3_desc').innerText,
-                },
-                
-                // Package saved Web Images (excluding massive raw local uploads)
-                images: {
-                    logo: imageSources.logo.type === 'url' ? imageSources.logo.value : '',
-                    hero: imageSources.hero.type === 'url' ? imageSources.hero.value : '',
-                    ft1: imageSources.ft1.type === 'url' ? imageSources.ft1.value : '',
-                    ft2: imageSources.ft2.type === 'url' ? imageSources.ft2.value : '',
-                    ft3: imageSources.ft3.type === 'url' ? imageSources.ft3.value : '',
-                    closer: imageSources.closer.type === 'url' ? imageSources.closer.value : ''
-                },
-                
-                // Package comments
-                comments: comments
+                accent: document.getElementById('field_headline_accent').innerText,
+                desc: document.getElementById('field_description').innerText,
+                disc: document.getElementById('field_disclaimer').innerText,
+                feature_title: document.getElementById('field_feature_title').innerText,
+                ft1_t: document.getElementById('field_ft1_title').innerText,
+                ft1_d: document.getElementById('field_ft1_desc').innerText,
+                ft2_t: document.getElementById('field_ft2_title').innerText,
+                ft2_d: document.getElementById('field_ft2_desc').innerText,
+                ft3_t: document.getElementById('field_ft3_title').innerText,
+                ft3_d: document.getElementById('field_ft3_desc').innerText,
+                closer_t: document.getElementById('field_closer_sub').innerText,
+                closer_d: document.getElementById('field_closer_desc').innerText,
+                hides: hiddenIds,
+                imgs: imageSources
             };
-
+            
             const hash = btoa(unescape(encodeURIComponent(JSON.stringify(state))));
             window.location.hash = `state=${hash}`;
-
-            if (!silent) {
-                showToast("Shareable link successfully created in your address bar!");
-            }
+            
+            // ALSO Save to local device recovery cache memory
+            localStorage.setItem('edm_workspace_backup', hash);
+            
+            if (!silent) showToast("Share Link Copied!");
         }
 
         function triggerCopyLink() {
-            saveStateToURL(true); // make sure URL hash is absolute fresh
-            const shareUrl = window.location.href;
-            
+            saveStateToURL(true);
             const dummy = document.createElement('textarea');
-            document.body.appendChild(dummy);
-            dummy.value = shareUrl;
-            dummy.select();
-            document.execCommand('copy');
-            document.body.removeChild(dummy);
-
-            showToast("Copied! Share URL copied to clipboard.");
+            document.body.appendChild(dummy); dummy.value = window.location.href; dummy.select();
+            document.execCommand('copy'); document.body.removeChild(dummy);
+            showToast("Shareable Link Copied to Clipboard!");
         }
 
-        // Custom UI Slide success notifications
-        function showToast(text) {
-            const toast = document.getElementById('toastNotification');
-            const toastText = document.getElementById('toastText');
-            toastText.innerText = text;
-            
-            toast.classList.remove('-translate-y-24');
-            toast.classList.add('translate-y-0');
-
-            setTimeout(() => {
-                toast.classList.remove('translate-y-0');
-                toast.classList.add('-translate-y-24');
-            }, 3000);
+        function showToast(txt) {
+            const t = document.getElementById('toastNotification');
+            document.getElementById('toastText').innerText = txt;
+            t.classList.remove('-translate-y-24');
+            setTimeout(() => t.classList.add('-translate-y-24'), 3000);
         }
 
-        function loadStateFromURL() {
-            const hash = window.location.hash;
-            if (!hash || !hash.startsWith('#state=')) return;
-
+        function loadStateFromURL(hashString) {
+            if (!hashString || !hashString.startsWith('#state=')) return;
             try {
-                const rawJson = decodeURIComponent(escape(atob(hash.substring(7))));
-                const state = JSON.parse(rawJson);
-
-                if (state.subject) document.getElementById('field_subject').innerText = state.subject;
-                if (state.preview) document.getElementById('field_preview_text').innerText = state.preview;
-                if (state.wayfinder) document.getElementById('field_wayfinder').innerText = state.wayfinder;
-                if (state.eyebrow) document.getElementById('field_eyebrow').innerText = state.eyebrow;
-                if (state.headline) document.getElementById('field_headline').innerText = state.headline;
-                if (state.headline_accent) document.getElementById('field_headline_accent').innerText = state.headline_accent;
-                if (state.description) document.getElementById('field_description').innerText = state.description;
-                if (state.disclaimer) document.getElementById('field_disclaimer').innerText = state.disclaimer;
-                if (state.closer_sub) document.getElementById('field_closer_sub').innerText = state.closer_sub;
-                if (state.closer_desc) document.getElementById('field_closer_desc').innerText = state.closer_desc;
+                // Clear any hidden classes before loading fresh configuration rules
+                document.querySelectorAll('.cta-wrapper').forEach(w => w.classList.remove('hidden'));
                 
-                // Load button visibilities
-                if (state.cta1_hidden) toggleButtonVisibility('btn_cta1');
-                if (state.cta2_hidden) toggleButtonVisibility('btn_cta2');
-                if (state.closer_cta_hidden) toggleButtonVisibility('btn_closer_cta');
-
-                // Load Features section content
-                if (state.features) {
-                    if (state.features.title) document.getElementById('field_feature_title').innerText = state.features.title;
-                    if (state.features.f1_title) document.getElementById('field_ft1_title').innerText = state.features.f1_title;
-                    if (state.features.f1_desc) document.getElementById('field_ft1_desc').innerText = state.features.f1_desc;
-                    if (state.features.f2_title) document.getElementById('field_ft2_title').innerText = state.features.f2_title;
-                    if (state.features.f2_desc) document.getElementById('field_ft2_desc').innerText = state.features.f2_desc;
-                    if (state.features.f3_title) document.getElementById('field_ft3_title').innerText = state.features.f3_title;
-                    if (state.features.f3_desc) document.getElementById('field_ft3_desc').innerText = state.features.f3_desc;
+                const state = JSON.parse(decodeURIComponent(escape(atob(hashString.substring(7)))));
+                document.getElementById('field_subject').innerText = state.subject || '';
+                document.getElementById('field_preview_text').innerText = state.preview || '';
+                document.getElementById('field_wayfinder').innerText = state.wayfinder || '';
+                document.getElementById('field_eyebrow').innerText = state.eyebrow || '';
+                document.getElementById('field_headline').innerText = state.headline || '';
+                document.getElementById('field_headline_accent').innerText = state.accent || '';
+                document.getElementById('field_description').innerText = state.desc || '';
+                document.getElementById('field_disclaimer').innerText = state.disc || '';
+                document.getElementById('field_feature_title').innerText = state.feature_title || '';
+                document.getElementById('field_ft1_title').innerText = state.ft1_t || '';
+                document.getElementById('field_ft1_desc').innerText = state.ft1_d || '';
+                document.getElementById('field_ft2_title').innerText = state.ft2_t || '';
+                document.getElementById('field_ft2_desc').innerText = state.ft2_d || '';
+                document.getElementById('field_ft3_title').innerText = state.ft3_t || '';
+                document.getElementById('field_ft3_desc').innerText = state.ft3_d || '';
+                document.getElementById('field_closer_sub').innerText = state.closer_t || '';
+                document.getElementById('field_closer_desc').innerText = state.closer_d || '';
+                
+                if (state.hides) {
+                    state.hides.forEach(id => { 
+                        const btn = document.getElementById(id);
+                        if(btn) {
+                            const el = btn.closest('.cta-wrapper'); 
+                            if(el) el.classList.add('hidden'); 
+                        }
+                    });
                 }
-
-                // Restore permanent Web Images (Figma or Web hosted URLs)
-                if (state.images) {
-                    if (state.images.logo) applyImageToElement('logo', 'url', state.images.logo);
-                    if (state.images.hero) applyImageToElement('hero', 'url', state.images.hero);
-                    if (state.images.ft1) applyImageToElement('ft1', 'url', state.images.ft1);
-                    if (state.images.ft2) applyImageToElement('ft2', 'url', state.images.ft2);
-                    if (state.images.ft3) applyImageToElement('ft3', 'url', state.images.ft3);
-                    if (state.images.closer) applyImageToElement('closer', 'url', state.images.closer);
-                }
-
-                // Load Comments
-                if (state.comments) {
-                    comments = state.comments;
-                    renderComments();
-                }
-
+                
+                if (state.imgs) Object.keys(state.imgs).forEach(k => applyImageToElement(k, state.imgs[k].type, state.imgs[k].value));
+                
                 syncInboxPreviews();
-            } catch (err) {
-                console.error('Failed to unpack shared state:', err);
-            }
+                updateRestoreButtonVisibility();
+            } catch (e) { console.error(e); }
         }
     </script>
 </body>
 </html>
+```eof
+
+Drop this updated code into your GitHub `index.html`. Now, if a tab closes or crashes, the very next time you open the template, a subtle **"Restore" banner** will automatically drop down at the top of the page to recover all your hard work instantly!
