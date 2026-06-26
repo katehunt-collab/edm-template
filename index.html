@@ -102,20 +102,23 @@
 </head>
 <body class="p-4 md:p-8 flex flex-col items-center">
 
-    <!-- Custom Toast Notification instead of Browser Alert -->
-    <div id="toastNotification" class="no-print fixed top-4 right-4 bg-emerald-600 text-white px-5 py-3.5 rounded-2xl shadow-2xl z-50 transform translate-y-[-150%] transition-transform duration-300 flex items-center gap-3 font-semibold text-xs border border-emerald-500">
-        <i class="fa-solid fa-circle-check text-base text-emerald-200"></i>
-        <span id="toastMessage">Changes Saved! Link updated in address bar.</span>
+    <!-- Custom Alert Toast Notification -->
+    <div id="toastNotification" class="fixed top-5 right-5 z-50 transform translate-y-[-100px] opacity-0 transition-all duration-300 bg-emerald-600 text-white px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3">
+        <i class="fa-solid fa-circle-check text-lg"></i>
+        <div>
+            <p class="font-bold text-xs">Link Copied Successfully!</p>
+            <p class="text-[10px] opacity-90">All copy variations and button layouts are saved inside your link.</p>
+        </div>
     </div>
 
     <!-- Floating Instruction and Action Controller (Non-Printable) -->
     <div class="no-print w-full max-w-xl mb-6 p-4 bg-white border border-slate-200 rounded-2xl shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
         <div>
             <h2 class="text-sm font-bold text-slate-800 flex items-center gap-1.5">
-                <span class="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-ping"></span>
+                <span class="w-2.5 h-2.5 bg-green-500 rounded-full animate-ping"></span>
                 Live Collaboration Workspace
             </h2>
-            <p class="text-xs text-slate-500">Edit copy inline. URLs update and auto-save instantly.</p>
+            <p class="text-xs text-slate-500">Edit copy inline. Drop images. Share your browser's link directly.</p>
         </div>
         <div class="flex items-center gap-2">
             <button onclick="restoreAllButtons()" id="restoreButtonsBtn" class="hidden bg-emerald-500 hover:bg-emerald-600 text-white text-xs px-3.5 py-2 rounded-lg font-bold flex items-center gap-1.5 transition-all shadow-md shadow-emerald-500/15">
@@ -239,15 +242,15 @@
                     </p>
                 </div>
 
-                <!-- Dual CTA Buttons with simplified hover action buttons -->
+                <!-- Dual CTA Buttons -->
                 <div class="mt-6 flex flex-wrap items-center justify-center gap-4">
-                    <div class="relative cta-wrapper group inline-block">
+                    <div class="relative group cta-wrapper inline-block">
                         <span id="btn_cta1" role="button" contenteditable="true" data-name="CTA 1" data-words="3" data-required="true" class="btn-pill block">Default</span>
                         <button onclick="toggleButtonVisibility('btn_cta1')" class="no-print absolute -top-2 -right-2 bg-rose-500 hover:bg-rose-600 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] shadow-md transition-all opacity-0 group-hover:opacity-100 focus:opacity-100" title="Hide Button">
                             <i class="fa-solid fa-trash-can"></i>
                         </button>
                     </div>
-                    <div class="relative cta-wrapper group inline-block">
+                    <div class="relative group cta-wrapper inline-block">
                         <span id="btn_cta2" role="button" contenteditable="true" data-name="CTA 2" data-words="3" data-required="false" class="btn-pill-secondary block">Default</span>
                         <button onclick="toggleButtonVisibility('btn_cta2')" class="no-print absolute -top-2 -right-2 bg-rose-500 hover:bg-rose-600 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] shadow-md transition-all opacity-0 group-hover:opacity-100 focus:opacity-100" title="Hide Button">
                             <i class="fa-solid fa-trash-can"></i>
@@ -265,7 +268,7 @@
             <div class="px-2">
                 <div onclick="triggerImageUpload('hero-file')" class="placeholder-box w-full aspect-[16/9] rounded-3xl flex items-center justify-center relative shadow-sm">
                     <input type="file" id="hero-file" class="hidden" accept="image/*" onchange="handleImage(this, 'hero-img', 'hero-svg')">
-                    <img id="hero-img" class="hidden w-full h-full object-cover" />
+                    <img id="hero-img" class="hidden w-full h-full object-cover animate-fade-in" />
                     <svg id="hero-svg" width="100" height="100" viewBox="0 0 100 100" class="text-slate-300 opacity-80">
                         <circle cx="50" cy="50" r="32" fill="none" stroke="currentColor" stroke-width="1.5"/>
                         <circle cx="34" cy="50" r="32" fill="none" stroke="currentColor" stroke-width="1.5"/>
@@ -368,7 +371,7 @@
 
                     <!-- Closer CTA Button -->
                     <div class="pt-2">
-                        <div class="relative cta-wrapper group inline-block">
+                        <div class="relative group cta-wrapper inline-block">
                             <span id="btn_closer_cta" role="button" contenteditable="true" data-name="CTA" data-words="3" data-required="true" class="btn-pill-secondary border-blue-500/30 px-8 py-2 text-sm block">Default</span>
                             <button onclick="toggleButtonVisibility('btn_closer_cta')" class="no-print absolute -top-2 -right-2 bg-rose-500 hover:bg-rose-600 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] shadow-md transition-all opacity-0 group-hover:opacity-100 focus:opacity-100" title="Hide Button">
                                 <i class="fa-solid fa-trash-can"></i>
@@ -413,21 +416,13 @@
         let comments = [];
         let activeComponentContext = 'general';
         let showCommentsSidebar = false;
-        let isSavingSilently = false;
 
         // Initialize Workspace Bindings
         window.onload = function() {
             setupSpecTrackers();
             syncInboxPreviews();
             loadStateFromURL();
-            
-            // Auto-save changes dynamically as the user types
-            const editableElements = document.querySelectorAll('[contenteditable="true"]');
-            editableElements.forEach(el => {
-                el.addEventListener('input', function() {
-                    autoSaveStateSilently();
-                });
-            });
+            setupAutoSaveTriggers();
         };
 
         // Handle button hides dynamically
@@ -440,7 +435,7 @@
                 }
             }
             updateRestoreButtonVisibility();
-            autoSaveStateSilently();
+            autoSaveState();
         }
 
         // Restore all interactive buttons
@@ -449,17 +444,39 @@
                 wrapper.classList.remove('hidden');
             });
             updateRestoreButtonVisibility();
-            autoSaveStateSilently();
+            autoSaveState();
         }
 
         // Check helper logic for the restore banner button
         function updateRestoreButtonVisibility() {
-            const hiddenButtons = Array.from(document.querySelectorAll('.cta-wrapper')).filter(el => el.classList.contains('hidden'));
+            const hiddenButtons = document.querySelectorAll('.cta-wrapper.hidden');
             const restoreBtn = document.getElementById('restoreButtonsBtn');
             if (hiddenButtons.length > 0) {
                 restoreBtn.classList.remove('hidden');
             } else {
                 restoreBtn.classList.add('hidden');
+            }
+        }
+
+        // Helper to check if a specific button wrapper is hidden
+        function isButtonHidden(id) {
+            const btn = document.getElementById(id);
+            if (!btn) return true;
+            const wrapper = btn.closest('.cta-wrapper');
+            return wrapper ? wrapper.classList.contains('hidden') : false;
+        }
+
+        // Helper to show/hide a button wrapper based on saved state
+        function setButtonVisibility(id, isHidden) {
+            const btn = document.getElementById(id);
+            if (!btn) return;
+            const wrapper = btn.closest('.cta-wrapper');
+            if (wrapper) {
+                if (isHidden) {
+                    wrapper.classList.add('hidden');
+                } else {
+                    wrapper.classList.remove('hidden');
+                }
             }
         }
 
@@ -507,6 +524,64 @@
             });
         }
 
+        // Auto-save setup to listen to every edit instantly
+        function setupAutoSaveTriggers() {
+            const editableElements = document.querySelectorAll('[contenteditable="true"]');
+            editableElements.forEach(el => {
+                el.addEventListener('input', function() {
+                    autoSaveState();
+                });
+            });
+        }
+
+        // Serializes state and updates browser URL without reloading
+        function autoSaveState() {
+            const state = {
+                subject: document.getElementById('field_subject').innerText,
+                preview: document.getElementById('field_preview_text').innerText,
+                wayfinder: document.getElementById('field_wayfinder').innerText,
+                eyebrow: document.getElementById('field_eyebrow').innerText,
+                headline: document.getElementById('field_headline').innerText,
+                headline_accent: document.getElementById('field_headline_accent').innerText,
+                description: document.getElementById('field_description').innerText,
+                disclaimer: document.getElementById('field_disclaimer').innerText,
+                closer_sub: document.getElementById('field_closer_sub').innerText,
+                closer_desc: document.getElementById('field_closer_desc').innerText,
+                
+                // Button Text Values
+                cta1_text: document.getElementById('btn_cta1').innerText,
+                cta2_text: document.getElementById('btn_cta2').innerText,
+                closer_cta_text: document.getElementById('btn_closer_cta').innerText,
+
+                // Button Visibility states
+                cta1_hidden: isButtonHidden('btn_cta1'),
+                cta2_hidden: isButtonHidden('btn_cta2'),
+                closer_cta_hidden: isButtonHidden('btn_closer_cta'),
+
+                features: {
+                    title: document.getElementById('field_feature_title').innerText,
+                    f1_title: document.getElementById('field_ft1_title').innerText,
+                    f1_desc: document.getElementById('field_ft1_desc').innerText,
+                    f2_title: document.getElementById('field_ft2_title').innerText,
+                    f2_desc: document.getElementById('field_ft2_desc').innerText,
+                    f3_title: document.getElementById('field_ft3_title').innerText,
+                    f3_desc: document.getElementById('field_ft3_desc').innerText,
+                },
+                comments: comments
+            };
+
+            try {
+                const jsonStr = JSON.stringify(state);
+                const utf8Bytes = encodeURIComponent(jsonStr).replace(/%([0-9A-F]{2})/g, function(match, p1) {
+                    return String.fromCharCode('0x' + p1);
+                });
+                const hash = btoa(utf8Bytes);
+                history.replaceState(null, null, '#state=' + hash);
+            } catch (err) {
+                console.error('Failed to auto-save to browser URL:', err);
+            }
+        }
+
         // Live Subject / Preview text simulation
         function syncInboxPreviews() {
             const subjectVal = document.getElementById('field_subject').innerText;
@@ -529,7 +604,8 @@
                     img.src = e.target.result;
                     img.classList.remove('hidden');
                     document.getElementById(svgId).classList.add('hidden');
-                    autoSaveStateSilently();
+                    // Trigger state save when image is updated
+                    autoSaveState();
                 }
                 reader.readAsDataURL(input.files[0]);
             }
@@ -609,7 +685,7 @@
 
             document.getElementById('commentBody').value = '';
             renderComments();
-            autoSaveStateSilently();
+            autoSaveState();
         }
 
         function renderComments() {
@@ -639,85 +715,48 @@
             );
         }
 
-        // Pack the entire application state into a JSON object
-        function packageCurrentState() {
-            const cta1Wrapper = document.getElementById('btn_cta1').closest('.cta-wrapper');
-            const cta2Wrapper = document.getElementById('btn_cta2').closest('.cta-wrapper');
-            const closerCtaWrapper = document.getElementById('btn_closer_cta').closest('.cta-wrapper');
-
-            return {
-                subject: document.getElementById('field_subject').innerText,
-                preview: document.getElementById('field_preview_text').innerText,
-                wayfinder: document.getElementById('field_wayfinder').innerText,
-                eyebrow: document.getElementById('field_eyebrow').innerText,
-                headline: document.getElementById('field_headline').innerText,
-                headline_accent: document.getElementById('field_headline_accent').innerText,
-                description: document.getElementById('field_description').innerText,
-                disclaimer: document.getElementById('field_disclaimer').innerText,
-                closer_sub: document.getElementById('field_closer_sub').innerText,
-                closer_desc: document.getElementById('field_closer_desc').innerText,
-                cta1_hidden: cta1Wrapper ? cta1Wrapper.classList.contains('hidden') : false,
-                cta2_hidden: cta2Wrapper ? cta2Wrapper.classList.contains('hidden') : false,
-                closer_cta_hidden: closerCtaWrapper ? closerCtaWrapper.classList.contains('hidden') : false,
-                features: {
-                    title: document.getElementById('field_feature_title').innerText,
-                    f1_title: document.getElementById('field_ft1_title').innerText,
-                    f1_desc: document.getElementById('field_ft1_desc').innerText,
-                    f2_title: document.getElementById('field_ft2_title').innerText,
-                    f2_desc: document.getElementById('field_ft2_desc').innerText,
-                    f3_title: document.getElementById('field_ft3_title').innerText,
-                    f3_desc: document.getElementById('field_ft3_desc').innerText,
-                },
-                comments: comments
-            };
-        }
-
-        // Automatically update the browser's URL hash silently as changes are made
-        function autoSaveStateSilently() {
-            try {
-                const state = packageCurrentState();
-                const hash = btoa(unescape(encodeURIComponent(JSON.stringify(state))));
-                
-                // silenty replace the hash in the browser address bar without creating infinite back-button history
-                history.replaceState(null, null, `${window.location.pathname}#state=${hash}`);
-            } catch (err) {
-                console.warn('Failed to silently update URL hash:', err);
-            }
-        }
-
-        // Generate and Copy Share Link with Toast Notification
+        // Generates Share URL and copies to clipboard with Toast Alert
         function generateShareLink() {
-            autoSaveStateSilently();
-            const shareUrl = window.location.href;
-            
+            // Re-sync final states
+            autoSaveState();
+
+            // Copy active URL to clipboard (including state hash)
+            const currentURL = window.location.href;
             const dummy = document.createElement('textarea');
             document.body.appendChild(dummy);
-            dummy.value = shareUrl;
+            dummy.value = currentURL;
             dummy.select();
-            document.execCommand('copy');
+            
+            try {
+                document.execCommand('copy');
+                showNotificationToast();
+            } catch (err) {
+                console.error('Failed to copy share link:', err);
+            }
             document.body.removeChild(dummy);
-
-            showToast("Visual draft and comments copy link updated in address bar!");
         }
 
-        // Custom slide-down Notification Toast
-        function showToast(msg) {
+        // Displays our modern UI Toast Notification instead of using alert()
+        function showNotificationToast() {
             const toast = document.getElementById('toastNotification');
-            document.getElementById('toastMessage').innerText = msg;
-            
-            toast.classList.remove('translate-y-[-150%]');
-            
+            toast.classList.remove('translate-y-[-100px]', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
             setTimeout(() => {
-                toast.classList.add('translate-y-[-150%]');
-            }, 3500);
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-[-100px]', 'opacity-0');
+            }, 4000);
         }
 
+        // De-serializes state from URL on page load
         function loadStateFromURL() {
             const hash = window.location.hash;
             if (!hash || !hash.startsWith('#state=')) return;
 
             try {
-                const rawJson = decodeURIComponent(escape(atob(hash.substring(7))));
+                const base64 = hash.substring(7);
+                const rawJson = decodeURIComponent(atob(base64).split('').map(function(c) {
+                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                }).join(''));
                 const state = JSON.parse(rawJson);
 
                 if (state.subject) document.getElementById('field_subject').innerText = state.subject;
@@ -731,10 +770,15 @@
                 if (state.closer_sub) document.getElementById('field_closer_sub').innerText = state.closer_sub;
                 if (state.closer_desc) document.getElementById('field_closer_desc').innerText = state.closer_desc;
                 
-                // Load saved button states
-                if (state.cta1_hidden) toggleButtonVisibility('btn_cta1');
-                if (state.cta2_hidden) toggleButtonVisibility('btn_cta2');
-                if (state.closer_cta_hidden) toggleButtonVisibility('btn_closer_cta');
+                // Load Custom Button Copy if modified
+                if (state.cta1_text) document.getElementById('btn_cta1').innerText = state.cta1_text;
+                if (state.cta2_text) document.getElementById('btn_cta2').innerText = state.cta2_text;
+                if (state.closer_cta_text) document.getElementById('btn_closer_cta').innerText = state.closer_cta_text;
+
+                // Load saved button states (Hidden vs Visible)
+                setButtonVisibility('btn_cta1', state.cta1_hidden);
+                setButtonVisibility('btn_cta2', state.cta2_hidden);
+                setButtonVisibility('btn_closer_cta', state.closer_cta_hidden);
 
                 if (state.features) {
                     if (state.features.title) document.getElementById('field_feature_title').innerText = state.features.title;
