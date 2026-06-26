@@ -25,9 +25,11 @@
             position: relative;
             overflow: hidden;
         }
-
         .placeholder-box:hover { border-color: #3b82f6; background-color: #f0fdf4; cursor: pointer; }
+        .placeholder-box.drag-over { border-color: #10b981; background-color: #ecfdf5; }
+        
         .spec-popup { position: absolute; bottom: calc(100% + 12px); left: 50%; transform: translateX(-50%); z-index: 50; pointer-events: none; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); }
+        
         .btn-pill { display: inline-block; background-color: #2563eb; color: white; padding: 0.75rem 2rem; border-radius: 9999px; font-weight: 600; text-align: center; border: 2px solid #2563eb; transition: all 0.2s; }
         .btn-pill-secondary { display: inline-block; background-color: white; color: #2563eb; padding: 0.75rem 2rem; border-radius: 9999px; font-weight: 600; text-align: center; border: 2px solid #e2e8f0; transition: all 0.2s; }
 
@@ -36,17 +38,31 @@
             body { background-color: white; padding: 0; }
             .shadow-xl { box-shadow: none !important; }
         }
+
+        .section-label {
+            position: absolute;
+            left: -120px;
+            top: 20px;
+            width: 100px;
+            text-align: right;
+            font-size: 11px;
+            font-weight: 800;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
     </style>
 </head>
 <body class="p-4 md:p-8 flex flex-col items-center">
 
+    <!-- Auto-Save Notification Toast -->
     <div id="toastNotification" class="no-print fixed top-5 left-1/2 -translate-x-1/2 -translate-y-24 bg-slate-900/95 text-white text-xs px-5 py-3 rounded-full shadow-2xl z-50 flex items-center gap-3 transition-all duration-500 border border-slate-700/50 backdrop-blur-sm">
         <span class="w-2 h-2 bg-emerald-500 rounded-full animate-ping"></span>
         <span id="toastText" class="font-medium">Changes Auto-Saved!</span>
     </div>
 
     <!-- Backup Recovery Alert Banner -->
-    <div id="recoveryBanner" class="no-print hidden w-full max-w-xl mb-4 p-3.5 bg-amber-50 border border-amber-200 rounded-2xl flex items-center justify-between gap-3 text-xs shadow-sm">
+    <div id="recoveryBanner" class="no-print hidden w-full max-w-xl mb-4 p-3.5 bg-amber-50 border border-amber-200 rounded-2xl flex items-center justify-between gap-3 text-xs shadow-sm animate-bounce">
         <div class="flex items-center gap-2.5 text-amber-800">
             <i class="fa-solid fa-clock-rotate-left text-base text-amber-600"></i>
             <div>
@@ -60,6 +76,7 @@
         </div>
     </div>
 
+    <!-- Action Header Bar -->
     <div class="no-print w-full max-w-xl mb-6 p-4 bg-white border border-slate-200 rounded-2xl shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
         <div>
             <h2 class="text-sm font-bold text-slate-800 flex items-center gap-1.5">
@@ -80,6 +97,7 @@
         </div>
     </div>
 
+    <!-- Main Workspace -->
     <div class="w-full max-w-xl relative">
         <div id="specBubble" class="spec-popup hidden bg-slate-900 text-white px-3 py-2 rounded-xl shadow-xl text-xs font-medium border border-slate-700/50 flex flex-col gap-0.5">
             <span id="specName" class="font-bold text-blue-400 text-[10px] uppercase tracking-wider">Field Specs</span>
@@ -89,44 +107,48 @@
             </div>
         </div>
 
-        <div class="bg-white shadow-xl rounded-3xl overflow-hidden border border-slate-100 p-6 space-y-6">
+        <!-- The Email Card -->
+        <div class="bg-white shadow-xl rounded-3xl overflow-hidden border border-slate-100 p-8 space-y-8 relative">
+            
+            <!-- Mobile Inbox Simulator -->
             <div class="bg-slate-50 rounded-2xl p-4 border border-slate-200/60 font-sf space-y-3">
                 <div class="flex items-center justify-between text-[11px] text-slate-400 font-medium pb-2 border-b border-slate-200/50">
-                    <span class="flex items-center gap-1.5"><i class="fa-solid fa-envelope text-slate-400"></i> INBOX SIMULATOR</span>
+                    <span class="flex items-center gap-1.5 font-bold uppercase"><i class="fa-solid fa-mobile-screen-button"></i> Mobile Inbox Preview</span>
                 </div>
                 <div class="flex gap-3">
                     <div class="w-10 h-10 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center text-xs shrink-0 shadow-sm shadow-blue-600/10">TG</div>
                     <div class="flex-grow min-w-0">
                         <div class="flex justify-between items-baseline">
                             <span class="font-bold text-slate-900 text-[13px]">Think with Google APAC</span>
-                            <span class="text-[11px] text-slate-400">Just now</span>
+                            <span class="text-[11px] text-slate-400 font-medium">Just now</span>
                         </div>
-                        <div class="text-[13px] font-semibold text-slate-900 truncate flex items-center gap-1.5 mt-0.5">
-                            <span id="inboxSubject" class="text-slate-900">Subject Line Placeholder</span>
-                        </div>
-                        <div class="text-[13px] text-slate-500 truncate mt-0.5">
-                            <span id="inboxPreviewText" class="text-slate-500">Preview Text Placeholder...</span>
-                        </div>
+                        <div class="text-[13px] font-bold text-slate-900 truncate mt-0.5" id="inboxSubject">Subject Line Placeholder</div>
+                        <div class="text-[13px] text-slate-500 truncate mt-0.5" id="inboxPreviewText">Preview Text Placeholder...</div>
                     </div>
                 </div>
             </div>
 
-            <div class="bg-slate-50/50 rounded-2xl p-4 border border-slate-100 grid grid-cols-1 gap-4">
-                <div class="relative group">
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Subject Line</label>
-                    <div id="field_subject" contenteditable="true" data-name="Subject line" data-max="50" data-min="0" data-required="true" class="bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-800 focus:border-blue-500 transition-all block">Subject Line Placeholder</div>
+            <!-- Subject/Preview Editors -->
+            <div class="bg-slate-50/50 rounded-2xl p-5 border border-slate-100 grid grid-cols-1 gap-5">
+                <div class="relative">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Subject Line (50 char max)</label>
+                    <div id="field_subject" contenteditable="true" data-name="Subject line" data-max="50" data-min="0" data-required="true" class="bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-800 focus:border-blue-500 shadow-sm">Subject Line Placeholder</div>
                 </div>
-                <div class="relative group">
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Preview Text</label>
-                    <div id="field_preview_text" contenteditable="true" data-name="Preview Text" data-max="150" data-min="0" data-required="false" class="bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-600 focus:border-blue-500 transition-all block">Preview Text Placeholder next to subject line...</div>
+                <div class="relative">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Preview Text</label>
+                    <div id="field_preview_text" contenteditable="true" data-name="Preview Text" data-max="150" data-min="0" data-required="false" class="bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-600 focus:border-blue-500 shadow-sm">Preview Text Placeholder next to subject line...</div>
                 </div>
             </div>
 
-            <div class="border-t border-dashed border-slate-200 my-6"></div>
+            <div class="border-t border-dashed border-slate-200"></div>
 
-            <header class="pt-4 pb-2 px-4 text-center space-y-4">
+            <!-- HERO SECTION -->
+            <header class="text-center space-y-6 relative">
+                <div class="section-label no-print">Hero</div>
+                
+                <!-- Logo PlaceHolder Box -->
                 <div class="relative mx-auto inline-block">
-                    <div onclick="openImageManager('logo')" class="placeholder-box w-28 h-10 rounded-lg flex flex-col items-center justify-center overflow-hidden border border-slate-200">
+                    <div onclick="openImageManager('logo')" data-id="logo" class="placeholder-box drop-target w-32 h-10 rounded-lg flex flex-col items-center justify-center overflow-hidden border border-slate-200">
                         <img id="logo-img" class="hidden w-full h-full object-contain p-1" onerror="handleImageError(this)" />
                         <div id="logo-svg" class="flex flex-col items-center justify-center text-slate-400 opacity-60">
                             <svg width="24" height="24" viewBox="0 0 100 100" class="stroke-current fill-none"><circle cx="50" cy="50" r="24" stroke-width="2"/><circle cx="38" cy="50" r="24" stroke-width="2"/><circle cx="62" cy="50" r="24" stroke-width="2"/></svg>
@@ -134,45 +156,36 @@
                     </div>
                 </div>
 
-                <div class="relative group">
-                    <p id="field_wayfinder" contenteditable="true" data-name="Hero wayfinder" data-max="48" data-min="0" data-required="false" class="text-[11px] font-extrabold tracking-widest text-slate-400 uppercase text-center">LOREM IPSUM</p>
-                </div>
-
-                <div class="relative group">
-                    <p id="field_eyebrow" contenteditable="true" data-name="Eyebrow" data-max="40" data-min="0" data-required="false" class="text-sm font-semibold text-slate-500 text-center">Max 40 characters (Optional)</p>
-                </div>
-
-                <div class="relative group">
-                    <h1 class="text-2xl md:text-3xl font-extrabold leading-tight text-center tracking-tight text-slate-900 space-y-1">
+                <div class="space-y-2">
+                    <p id="field_wayfinder" contenteditable="true" data-name="Hero wayfinder" data-max="48" data-min="0" data-required="false" class="text-[11px] font-extrabold tracking-[0.2em] text-slate-400 uppercase">LOREM IPSUM</p>
+                    <p id="field_eyebrow" contenteditable="true" data-name="Eyebrow" data-max="40" data-min="0" data-required="false" class="text-sm font-semibold text-slate-500">Max 40 characters (Optional)</p>
+                    <h1 class="text-3xl font-extrabold leading-tight tracking-tight text-slate-900 px-4">
                         <span id="field_headline" contenteditable="true" data-name="Headline" data-max="40" data-min="16" data-required="true" class="block">Lorem ipsum dolor sit</span>
                         <span id="field_headline_accent" contenteditable="true" data-name="Headline Accent" data-max="40" data-min="0" data-required="false" class="block text-blue-600">amet consectetur</span>
                     </h1>
                 </div>
 
-                <div class="relative group max-w-md mx-auto">
-                    <p id="field_description" contenteditable="true" data-name="Description" data-max="115" data-min="55" data-required="false" class="mt-4 text-slate-500 text-sm leading-relaxed text-center">
-                        Lorem ipsum dolor sit amet consectetur. Iaculis integer nisi amet et magnis in ac. Eget id urna nisi ultrices dui egestas vulputate.
-                    </p>
-                </div>
+                <p id="field_description" contenteditable="true" data-name="Description" data-max="115" data-min="55" data-required="false" class="text-slate-500 text-sm leading-relaxed max-w-sm mx-auto">
+                    Lorem ipsum dolor sit amet consectetur. Iaculis integer nisi amet et magnis in ac. Eget id urna nisi ultrices dui egestas vulputate.
+                </p>
 
-                <div class="mt-6 flex flex-wrap items-center justify-center gap-4">
+                <div class="flex flex-wrap items-center justify-center gap-4 pt-2">
                     <div class="cta-wrapper group relative inline-block">
                         <span id="btn_cta1" role="button" contenteditable="true" data-name="CTA 1" data-words="3" data-required="true" class="btn-pill block">Default</span>
-                        <button onclick="toggleButtonVisibility('btn_cta1')" class="no-print absolute -top-2 -right-2 bg-rose-500 hover:bg-rose-600 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] shadow-md opacity-0 group-hover:opacity-100" title="Hide Button"><i class="fa-solid fa-trash-can"></i></button>
+                        <button onclick="toggleButtonVisibility('btn_cta1')" class="no-print absolute -top-2 -right-2 bg-rose-500 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"><i class="fa-solid fa-trash-can"></i></button>
                     </div>
                     <div class="cta-wrapper group relative inline-block">
                         <span id="btn_cta2" role="button" contenteditable="true" data-name="CTA 2" data-words="3" data-required="false" class="btn-pill-secondary block">Default</span>
-                        <button onclick="toggleButtonVisibility('btn_cta2')" class="no-print absolute -top-2 -right-2 bg-rose-500 hover:bg-rose-600 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] shadow-md opacity-0 group-hover:opacity-100" title="Hide Button"><i class="fa-solid fa-trash-can"></i></button>
+                        <button onclick="toggleButtonVisibility('btn_cta2')" class="no-print absolute -top-2 -right-2 bg-rose-500 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"><i class="fa-solid fa-trash-can"></i></button>
                     </div>
                 </div>
 
-                <div class="relative group">
-                    <p id="field_disclaimer" contenteditable="true" data-name="Disclaimer" data-max="115" data-min="55" data-required="false" class="mt-4 text-[10px] text-slate-400 italic text-center">*disclaimer text lorem ipsum</p>
-                </div>
+                <p id="field_disclaimer" contenteditable="true" data-name="Disclaimer" data-max="115" data-min="55" data-required="false" class="text-[10px] text-slate-400 italic">*disclaimer text lorem ipsum</p>
             </header>
 
+            <!-- Hero Image PlaceHolder Box -->
             <div class="px-2">
-                <div onclick="openImageManager('hero')" class="placeholder-box w-full aspect-[16/9] rounded-3xl flex items-center justify-center relative shadow-sm overflow-hidden">
+                <div onclick="openImageManager('hero')" data-id="hero" class="placeholder-box drop-target w-full aspect-[16/9] rounded-3xl flex items-center justify-center relative shadow-sm overflow-hidden">
                     <img id="hero-img" class="hidden w-full h-full object-cover" onerror="handleImageError(this)" />
                     <div id="hero-svg" class="flex items-center justify-center">
                         <svg width="100" height="100" viewBox="0 0 100 100" class="text-slate-300 opacity-80 stroke-current fill-none">
@@ -183,41 +196,43 @@
                 </div>
             </div>
 
-            <section class="px-4 py-6 space-y-8">
+            <!-- FEATURE STACK -->
+            <section class="space-y-8 relative">
                 <h2 id="field_feature_title" contenteditable="true" data-name="Feature Title" data-max="65" data-min="10" data-required="true" class="text-xl font-bold text-center text-slate-900">Headline goes here</h2>
-                <div class="space-y-6 max-w-md mx-auto">
+                
+                <div class="space-y-8 max-w-sm mx-auto">
+                    <!-- Ft1 -->
                     <div class="flex gap-4 items-start relative group">
-                        <div onclick="openImageManager('ft1')" class="placeholder-box shrink-0 w-12 h-12 rounded-xl flex items-center justify-center shadow-sm overflow-hidden">
+                        <div class="section-label no-print">Ft1</div>
+                        <div onclick="openImageManager('ft1')" data-id="ft1" class="placeholder-box drop-target shrink-0 w-12 h-12 rounded-xl flex items-center justify-center shadow-sm overflow-hidden">
                             <img id="ft1-img" class="hidden w-full h-full object-cover" onerror="handleImageError(this)" />
-                            <div id="ft1-svg" class="flex items-center justify-center">
-                                <svg width="22" height="22" viewBox="0 0 100 100" class="text-slate-400 stroke-current fill-none"><circle cx="50" cy="50" r="30" stroke-width="2"/><circle cx="35" cy="50" r="30" stroke-width="2"/><circle cx="65" cy="50" r="30" stroke-width="2"/></svg>
-                            </div>
+                            <div id="ft1-svg" class="flex items-center justify-center"><i class="fa-solid fa-plus text-slate-300"></i></div>
                         </div>
-                        <div class="flex-grow space-y-1">
+                        <div class="space-y-1">
                             <h3 id="field_ft1_title" contenteditable="true" data-name="Title #1" data-max="65" data-min="10" data-required="true" class="font-bold text-slate-900 text-sm">Subheadline</h3>
                             <p id="field_ft1_desc" contenteditable="true" data-name="Data #1" data-max="95" data-min="10" data-required="false" class="text-xs text-slate-500 leading-relaxed">Lorem ipsum dolor sit amet consectetur.</p>
                         </div>
                     </div>
+                    <!-- Ft2 -->
                     <div class="flex gap-4 items-start relative group">
-                        <div onclick="openImageManager('ft2')" class="placeholder-box shrink-0 w-12 h-12 rounded-xl flex items-center justify-center shadow-sm overflow-hidden">
+                        <div class="section-label no-print">Ft2</div>
+                        <div onclick="openImageManager('ft2')" data-id="ft2" class="placeholder-box drop-target shrink-0 w-12 h-12 rounded-xl flex items-center justify-center shadow-sm overflow-hidden">
                             <img id="ft2-img" class="hidden w-full h-full object-cover" onerror="handleImageError(this)" />
-                            <div id="ft2-svg" class="flex items-center justify-center">
-                                <svg width="22" height="22" viewBox="0 0 100 100" class="text-slate-400 stroke-current fill-none"><circle cx="50" cy="50" r="30" stroke-width="2"/><circle cx="35" cy="50" r="30" stroke-width="2"/><circle cx="65" cy="50" r="30" stroke-width="2"/></svg>
-                            </div>
+                            <div id="ft2-svg" class="flex items-center justify-center"><i class="fa-solid fa-plus text-slate-300"></i></div>
                         </div>
-                        <div class="flex-grow space-y-1">
+                        <div class="space-y-1">
                             <h3 id="field_ft2_title" contenteditable="true" data-name="Title #2" data-max="65" data-min="10" data-required="true" class="font-bold text-slate-900 text-sm">Subheadline</h3>
                             <p id="field_ft2_desc" contenteditable="true" data-name="Data #2" data-max="95" data-min="10" data-required="false" class="text-xs text-slate-500 leading-relaxed">Lorem ipsum dolor sit amet consectetur.</p>
                         </div>
                     </div>
+                    <!-- Ft3 -->
                     <div class="flex gap-4 items-start relative group">
-                        <div onclick="openImageManager('ft3')" class="placeholder-box shrink-0 w-12 h-12 rounded-xl flex items-center justify-center shadow-sm overflow-hidden">
+                        <div class="section-label no-print">Ft3</div>
+                        <div onclick="openImageManager('ft3')" data-id="ft3" class="placeholder-box drop-target shrink-0 w-12 h-12 rounded-xl flex items-center justify-center shadow-sm overflow-hidden">
                             <img id="ft3-img" class="hidden w-full h-full object-cover" onerror="handleImageError(this)" />
-                            <div id="ft3-svg" class="flex items-center justify-center">
-                                <svg width="22" height="22" viewBox="0 0 100 100" class="text-slate-400 stroke-current fill-none"><circle cx="50" cy="50" r="30" stroke-width="2"/><circle cx="35" cy="50" r="30" stroke-width="2"/><circle cx="65" cy="50" r="30" stroke-width="2"/></svg>
-                            </div>
+                            <div id="ft3-svg" class="flex items-center justify-center"><i class="fa-solid fa-plus text-slate-300"></i></div>
                         </div>
-                        <div class="flex-grow space-y-1">
+                        <div class="space-y-1">
                             <h3 id="field_ft3_title" contenteditable="true" data-name="Title #3" data-max="65" data-min="10" data-required="true" class="font-bold text-slate-900 text-sm">Subheadline</h3>
                             <p id="field_ft3_desc" contenteditable="true" data-name="Data #3" data-max="95" data-min="10" data-required="false" class="text-xs text-slate-500 leading-relaxed">Lorem ipsum dolor sit amet consectetur.</p>
                         </div>
@@ -225,24 +240,26 @@
                 </div>
             </section>
 
-            <section class="p-4 pt-8">
-                <div class="bg-slate-50/50 rounded-3xl p-6 text-center border border-slate-100 flex flex-col items-center space-y-4">
-                    <div onclick="openImageManager('closer')" class="placeholder-box w-12 h-12 rounded-xl flex items-center justify-center shadow-sm overflow-hidden">
+            <!-- CLOSER SECTION -->
+            <section class="pt-8 relative">
+                <div class="section-label no-print">Closer</div>
+                <div class="bg-slate-50/50 rounded-3xl p-8 text-center border border-slate-100 flex flex-col items-center space-y-4">
+                    <div onclick="openImageManager('closer')" data-id="closer" class="placeholder-box drop-target w-12 h-12 rounded-xl flex items-center justify-center shadow-sm overflow-hidden">
                         <img id="closer-img" class="hidden w-full h-full object-cover" onerror="handleImageError(this)" />
                         <div id="closer-svg" class="flex items-center justify-center"><i class="fa-solid fa-plus text-slate-300"></i></div>
                     </div>
-                    <h2 id="field_closer_sub" contenteditable="true" data-name="Subheadline" data-max="60" data-min="16" data-required="true" class="text-lg font-extrabold text-slate-900 max-w-sm">Lorem ipsum dolor sit amet</h2>
-                    <p id="field_closer_desc" contenteditable="true" data-name="Description" data-max="200" data-min="55" data-required="false" class="text-xs text-slate-500 leading-relaxed max-w-sm">Lorem ipsum dolor sit amet consectetur.</p>
+                    <h2 id="field_closer_sub" contenteditable="true" data-name="Subheadline" data-max="60" data-min="16" data-required="true" class="text-lg font-extrabold text-slate-900 max-w-sm">Lorem ipsum dolor sit amet consectetur</h2>
+                    <p id="field_closer_desc" contenteditable="true" data-name="Description" data-max="200" data-min="55" data-required="false" class="text-xs text-slate-500 leading-relaxed max-w-sm">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Tincidunt lorem id lorem arcu, rhoncus nibh faucibus.</p>
                     <div class="cta-wrapper group relative inline-block">
                         <span id="btn_closer_cta" role="button" contenteditable="true" data-name="CTA" data-words="3" data-required="true" class="btn-pill-secondary px-8 py-2 text-sm block">Default</span>
-                        <button onclick="toggleButtonVisibility('btn_closer_cta')" class="no-print absolute -top-2 -right-2 bg-rose-500 hover:bg-rose-600 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] opacity-0 group-hover:opacity-100"><i class="fa-solid fa-trash-can"></i></button>
+                        <button onclick="toggleButtonVisibility('btn_closer_cta')" class="no-print absolute -top-2 -right-2 bg-rose-500 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"><i class="fa-solid fa-trash-can"></i></button>
                     </div>
                 </div>
             </section>
         </div>
     </div>
 
-    <!-- Image Sources Modal Popup Container -->
+    <!-- Image Modal -->
     <div id="imageModal" class="no-print fixed inset-0 bg-slate-950/45 flex items-center justify-center p-4 z-50 hidden backdrop-blur-sm">
         <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl border border-slate-200 overflow-hidden">
             <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
@@ -251,17 +268,17 @@
             </div>
             <div class="p-5 space-y-4 text-xs">
                 <div>
-                    <label class="block font-bold text-slate-700 mb-1">Paste Google Drive Share Link (Auto-Fixing Enabled!)</label>
-                    <input type="text" id="imgModalUrl" placeholder="Paste your full Google Drive Link here..." class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 outline-none focus:border-blue-500 focus:bg-white transition-all">
+                    <label class="block font-bold text-slate-700 mb-1">Paste Google Drive Link (Auto-Fixer Active)</label>
+                    <input type="text" id="imgModalUrl" placeholder="Paste full Drive link..." class="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 outline-none focus:border-blue-500 focus:bg-white transition-all">
                 </div>
-                <div class="relative flex py-2 items-center"><div class="flex-grow border-t border-slate-100"></div><span class="flex-shrink mx-4 text-slate-400 text-[9px] uppercase font-bold tracking-widest">or</span><div class="flex-grow border-t border-slate-100"></div></div>
+                <div class="relative flex py-2 items-center"><div class="flex-grow border-t border-slate-100"></div><span class="flex-shrink mx-4 text-slate-400 text-[9px] font-bold">OR</span><div class="flex-grow border-t border-slate-100"></div></div>
                 <div>
-                    <label class="block font-bold text-slate-700 mb-2">Upload Local Image (Temporary Preview Only)</label>
-                    <input type="file" id="imgModalFile" accept="image/*" class="w-full text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
+                    <label class="block font-bold text-slate-700 mb-2">Upload File (Auto-Compressed for URL Sharing)</label>
+                    <input type="file" id="imgModalFile" accept="image/*" class="w-full text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
                 </div>
                 <div class="pt-2 flex gap-3">
-                    <button onclick="saveImageSelection()" class="flex-grow bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl transition-all">Apply to Design</button>
-                    <button onclick="clearImageSelection()" class="bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold px-4 py-2.5 rounded-xl transition-all">Remove</button>
+                    <button onclick="saveImageSelection()" class="flex-grow bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-all">Apply to Mockup</button>
+                    <button onclick="clearImageSelection()" class="bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold px-4 py-3 rounded-xl transition-all">Remove</button>
                 </div>
             </div>
         </div>
@@ -274,6 +291,7 @@
         window.onload = function() {
             setupSpecTrackers();
             syncInboxPreviews();
+            setupDragAndDrop();
             
             // Check if loading straight from an shared hash URL or fallback to memory
             if (window.location.hash.startsWith('#state=')) {
@@ -281,45 +299,32 @@
             } else {
                 checkLocalWorkspaceBackup();
             }
-            
             setupAutoSaveTriggers();
         };
 
         function setupAutoSaveTriggers() {
             document.querySelectorAll('[contenteditable="true"]').forEach(el => {
-                el.addEventListener('input', () => { 
-                    syncInboxPreviews(); 
-                    saveStateToURL(true); 
-                });
+                el.addEventListener('input', () => { syncInboxPreviews(); saveStateToURL(true); });
             });
         }
 
-        // --- NEW LOCAL BACKUP STORAGE CODE ---
         function checkLocalWorkspaceBackup() {
-            const backup = localStorage.getItem('edm_workspace_backup');
-            if (backup) {
-                document.getElementById('recoveryBanner').classList.remove('hidden');
-            }
+            if (localStorage.getItem('edm_workspace_backup')) document.getElementById('recoveryBanner').classList.remove('hidden');
         }
 
         function applyBackup() {
-            const backup = localStorage.getItem('edm_workspace_backup');
-            if (backup) {
-                loadStateFromURL('#state=' + backup);
-                document.getElementById('recoveryBanner').classList.add('hidden');
-                showToast("Workspace backup successfully restored!");
-            }
+            loadStateFromURL('#state=' + localStorage.getItem('edm_workspace_backup'));
+            document.getElementById('recoveryBanner').classList.add('hidden');
+            showToast("Backup restored!");
         }
 
         function dismissBackup() {
             localStorage.removeItem('edm_workspace_backup');
             document.getElementById('recoveryBanner').classList.add('hidden');
         }
-        // -------------------------------------
 
         function toggleButtonVisibility(id) {
-            const el = document.getElementById(id).closest('.cta-wrapper');
-            el.classList.toggle('hidden');
+            document.getElementById(id).closest('.cta-wrapper').classList.toggle('hidden');
             updateRestoreButtonVisibility();
             saveStateToURL(true);
         }
@@ -331,49 +336,103 @@
         }
 
         function updateRestoreButtonVisibility() {
-            const hidden = document.querySelectorAll('.cta-wrapper.hidden').length;
-            document.getElementById('restoreButtonsBtn').classList.toggle('hidden', hidden === 0);
+            document.getElementById('restoreButtonsBtn').classList.toggle('hidden', document.querySelectorAll('.cta-wrapper.hidden').length === 0);
         }
 
         function openImageManager(id) {
             currentTargetImageId = id;
             document.getElementById('imgModalUrl').value = imageSources[id].type === 'url' ? imageSources[id].value : '';
-            document.getElementById('imgModalFile').value = '';
             document.getElementById('imageModal').classList.remove('hidden');
         }
 
         function closeImageManager() { document.getElementById('imageModal').classList.add('hidden'); }
+
+        // Core HTML5 Canvas image compressor (downsamples large files to ultra-light JPEGs)
+        function compressAndApplyImage(file, targetId) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+                    
+                    // Constrain maximum width/height to keep Base64 footprint lightweight
+                    const maxDim = 500;
+                    if (width > maxDim || height > maxDim) {
+                        if (width > height) {
+                            height = Math.round((height * maxDim) / width);
+                            width = maxDim;
+                        } else {
+                            width = Math.round((width * maxDim) / height);
+                            height = maxDim;
+                        }
+                    }
+                    
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    // Compress image to optimized web-standard JPEG
+                    const compressedBase64 = canvas.toDataURL('image/jpeg', 0.65);
+                    
+                    applyImageToElement(targetId, 'local', compressedBase64);
+                    saveStateToURL(true);
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Setup Drag & Drop handlers directly on the placeholder containers
+        function setupDragAndDrop() {
+            const dropTargets = document.querySelectorAll('.drop-target');
+            
+            dropTargets.forEach(target => {
+                target.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    target.classList.add('drag-over');
+                });
+                
+                target.addEventListener('dragleave', () => {
+                    target.classList.remove('drag-over');
+                });
+                
+                target.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    target.classList.remove('drag-over');
+                    const targetId = target.getAttribute('data-id');
+                    
+                    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                        compressAndApplyImage(e.dataTransfer.files[0], targetId);
+                        showToast("Image uploaded and auto-compressed!");
+                    }
+                });
+            });
+        }
 
         function saveImageSelection() {
             let val = document.getElementById('imgModalUrl').value.trim();
             const fileInput = document.getElementById('imgModalFile');
 
             if (fileInput.files && fileInput.files[0]) {
-                const reader = new FileReader();
-                reader.onload = (e) => { applyImageToElement(currentTargetImageId, 'local', e.target.result); closeImageManager(); saveStateToURL(true); };
-                reader.readAsDataURL(fileInput.files[0]);
+                compressAndApplyImage(fileInput.files[0], currentTargetImageId);
+                closeImageManager();
             } else if (val) {
                 if (val.includes('drive.google.com')) {
                     const idMatch = val.match(/\/d\/([^\/?]+)/) || val.match(/id=([^\&]+)/);
-                    if (idMatch && idMatch[1]) {
-                        val = `https://drive.google.com/uc?export=view&id=${idMatch[1]}`;
-                    }
+                    if (idMatch && idMatch[1]) val = `https://drive.google.com/uc?export=view&id=${idMatch[1]}`;
                 }
                 applyImageToElement(currentTargetImageId, 'url', val);
                 closeImageManager();
                 saveStateToURL(true);
-            } else {
-                closeImageManager();
-            }
+            } else { closeImageManager(); }
         }
 
         function handleImageError(img) {
-            if (img.src && img.src.includes('drive.google.com')) {
-                const idMatch = img.src.match(/id=([^\&]+)/);
-                if (idMatch && idMatch[1]) {
-                    img.src = `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w1000`;
-                }
-            }
+            const idMatch = img.src.match(/id=([^\&]+)/);
+            if (idMatch && idMatch[1]) img.src = `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w1000`;
         }
 
         function applyImageToElement(id, type, val) {
@@ -391,12 +450,9 @@
             document.querySelectorAll('[contenteditable="true"]').forEach(el => {
                 el.addEventListener('focus', () => {
                     const name = el.getAttribute('data-name');
-                    const max = el.getAttribute('data-max');
-                    const min = el.getAttribute('data-min');
-                    const words = el.getAttribute('data-words');
                     if (name) {
                         document.getElementById('specName').innerText = name;
-                        document.getElementById('specRules').innerText = words ? `Max Word Count: ${words}` : `Min ${min}, Max ${max} Chars`;
+                        document.getElementById('specRules').innerText = el.getAttribute('data-words') ? `Max Word Count: ${el.getAttribute('data-words')}` : `Min ${el.getAttribute('data-min')}, Max ${el.getAttribute('data-max')} Chars`;
                         updateCounter(el);
                         const r = el.getBoundingClientRect();
                         bubble.style.top = `${r.top + window.scrollY - 40}px`;
@@ -411,7 +467,6 @@
 
         function updateCounter(el) {
             const txt = el.innerText.trim();
-            const len = txt.length;
             const max = parseInt(el.getAttribute('data-max'));
             const words = parseInt(el.getAttribute('data-words'));
             const counter = document.getElementById('specCounter');
@@ -421,8 +476,8 @@
                 counter.innerText = `${count}/${words} words`;
                 counter.className = count > words ? "bg-red-500 text-white px-1.5 py-0.5 rounded" : "bg-emerald-500 text-white px-1.5 py-0.5 rounded";
             } else {
-                counter.innerText = `${len}/${max} chars`;
-                counter.className = len > max ? "bg-red-500 text-white px-1.5 py-0.5 rounded" : "bg-emerald-500 text-white px-1.5 py-0.5 rounded";
+                counter.innerText = `${txt.length}/${max} chars`;
+                counter.className = txt.length > max ? "bg-red-500 text-white px-1.5 py-0.5 rounded" : "bg-emerald-500 text-white px-1.5 py-0.5 rounded";
             }
         }
 
@@ -432,42 +487,42 @@
         }
 
         function saveStateToURL(silent = false) {
-            // Read hidden status elements safely
-            const hiddenIds = [];
-            document.querySelectorAll('.cta-wrapper.hidden').forEach(el => {
-                const insideBtn = el.querySelector('[id]');
-                if(insideBtn) hiddenIds.push(insideBtn.id);
-            });
-
-            const state = {
-                subject: document.getElementById('field_subject').innerText,
-                preview: document.getElementById('field_preview_text').innerText,
-                wayfinder: document.getElementById('field_wayfinder').innerText,
-                eyebrow: document.getElementById('field_eyebrow').innerText,
-                headline: document.getElementById('field_headline').innerText,
-                accent: document.getElementById('field_headline_accent').innerText,
-                desc: document.getElementById('field_description').innerText,
-                disc: document.getElementById('field_disclaimer').innerText,
-                feature_title: document.getElementById('field_feature_title').innerText,
-                ft1_t: document.getElementById('field_ft1_title').innerText,
-                ft1_d: document.getElementById('field_ft1_desc').innerText,
-                ft2_t: document.getElementById('field_ft2_title').innerText,
-                ft2_d: document.getElementById('field_ft2_desc').innerText,
-                ft3_t: document.getElementById('field_ft3_title').innerText,
-                ft3_d: document.getElementById('field_ft3_desc').innerText,
-                closer_t: document.getElementById('field_closer_sub').innerText,
-                closer_d: document.getElementById('field_closer_desc').innerText,
-                hides: hiddenIds,
-                imgs: imageSources
-            };
-            
-            const hash = btoa(unescape(encodeURIComponent(JSON.stringify(state))));
-            window.location.hash = `state=${hash}`;
-            
-            // ALSO Save to local device recovery cache memory
-            localStorage.setItem('edm_workspace_backup', hash);
-            
-            if (!silent) showToast("Share Link Copied!");
+            try {
+                const state = {
+                    subject: document.getElementById('field_subject').innerText,
+                    preview: document.getElementById('field_preview_text').innerText,
+                    wayfinder: document.getElementById('field_wayfinder').innerText,
+                    eyebrow: document.getElementById('field_eyebrow').innerText,
+                    headline: document.getElementById('field_headline').innerText,
+                    accent: document.getElementById('field_headline_accent').innerText,
+                    desc: document.getElementById('field_description').innerText,
+                    disc: document.getElementById('field_disclaimer').innerText,
+                    f_t: document.getElementById('field_feature_title').innerText,
+                    ft1_t: document.getElementById('field_ft1_title').innerText,
+                    ft1_d: document.getElementById('field_ft1_desc').innerText,
+                    ft2_t: document.getElementById('field_ft2_title').innerText,
+                    ft2_d: document.getElementById('field_ft2_desc').innerText,
+                    ft3_t: document.getElementById('field_ft3_title').innerText,
+                    ft3_d: document.getElementById('field_ft3_desc').innerText,
+                    cl_t: document.getElementById('field_closer_sub').innerText,
+                    cl_d: document.getElementById('field_closer_desc').innerText,
+                    hides: Array.from(document.querySelectorAll('.cta-wrapper.hidden')).map(el => el.querySelector('[id]').id),
+                    imgs: imageSources
+                };
+                
+                const jsonStr = JSON.stringify(state);
+                const hash = btoa(unescape(encodeURIComponent(jsonStr)));
+                
+                // Keep URL updated for simple clipboard sharing
+                window.location.hash = `state=${hash}`;
+                
+                // Store robust high-fidelity backup into Local Memory
+                localStorage.setItem('edm_workspace_backup', hash);
+                
+                if (!silent) showToast("Changes saved successfully!");
+            } catch (err) {
+                console.error("Save system error:", err);
+            }
         }
 
         function triggerCopyLink() {
@@ -475,7 +530,7 @@
             const dummy = document.createElement('textarea');
             document.body.appendChild(dummy); dummy.value = window.location.href; dummy.select();
             document.execCommand('copy'); document.body.removeChild(dummy);
-            showToast("Shareable Link Copied to Clipboard!");
+            showToast("Shareable Link Copied!");
         }
 
         function showToast(txt) {
@@ -485,50 +540,23 @@
             setTimeout(() => t.classList.add('-translate-y-24'), 3000);
         }
 
-        function loadStateFromURL(hashString) {
-            if (!hashString || !hashString.startsWith('#state=')) return;
+        function loadStateFromURL(hash) {
             try {
-                // Clear any hidden classes before loading fresh configuration rules
+                const state = JSON.parse(decodeURIComponent(escape(atob(hash.substring(7)))));
+                const fields = { field_subject: 'subject', field_preview_text: 'preview', field_wayfinder: 'wayfinder', field_eyebrow: 'eyebrow', field_headline: 'headline', field_headline_accent: 'accent', field_description: 'desc', field_disclaimer: 'disc', field_feature_title: 'f_t', field_ft1_title: 'ft1_t', field_ft1_desc: 'ft1_d', field_ft2_title: 'ft2_t', field_ft2_desc: 'ft2_d', field_ft3_title: 'ft3_t', field_ft3_desc: 'ft3_d', field_closer_sub: 'cl_t', field_closer_desc: 'cl_d' };
+                Object.keys(fields).forEach(id => { if(state[fields[id]]) document.getElementById(id).innerText = state[fields[id]]; });
+                
+                // Clear active button hidings before applying saved layout patterns
                 document.querySelectorAll('.cta-wrapper').forEach(w => w.classList.remove('hidden'));
-                
-                const state = JSON.parse(decodeURIComponent(escape(atob(hashString.substring(7)))));
-                document.getElementById('field_subject').innerText = state.subject || '';
-                document.getElementById('field_preview_text').innerText = state.preview || '';
-                document.getElementById('field_wayfinder').innerText = state.wayfinder || '';
-                document.getElementById('field_eyebrow').innerText = state.eyebrow || '';
-                document.getElementById('field_headline').innerText = state.headline || '';
-                document.getElementById('field_headline_accent').innerText = state.accent || '';
-                document.getElementById('field_description').innerText = state.desc || '';
-                document.getElementById('field_disclaimer').innerText = state.disc || '';
-                document.getElementById('field_feature_title').innerText = state.feature_title || '';
-                document.getElementById('field_ft1_title').innerText = state.ft1_t || '';
-                document.getElementById('field_ft1_desc').innerText = state.ft1_d || '';
-                document.getElementById('field_ft2_title').innerText = state.ft2_t || '';
-                document.getElementById('field_ft2_desc').innerText = state.ft2_d || '';
-                document.getElementById('field_ft3_title').innerText = state.ft3_t || '';
-                document.getElementById('field_ft3_desc').innerText = state.ft3_d || '';
-                document.getElementById('field_closer_sub').innerText = state.closer_t || '';
-                document.getElementById('field_closer_desc').innerText = state.closer_d || '';
-                
-                if (state.hides) {
-                    state.hides.forEach(id => { 
-                        const btn = document.getElementById(id);
-                        if(btn) {
-                            const el = btn.closest('.cta-wrapper'); 
-                            if(el) el.classList.add('hidden'); 
-                        }
-                    });
-                }
+                if (state.hides) state.hides.forEach(id => {
+                    const btn = document.getElementById(id);
+                    if (btn) btn.closest('.cta-wrapper').classList.add('hidden');
+                });
                 
                 if (state.imgs) Object.keys(state.imgs).forEach(k => applyImageToElement(k, state.imgs[k].type, state.imgs[k].value));
-                
-                syncInboxPreviews();
-                updateRestoreButtonVisibility();
-            } catch (e) { console.error(e); }
+                syncInboxPreviews(); updateRestoreButtonVisibility();
+            } catch (e) { console.error("Restore payload parse failure:", e); }
         }
     </script>
 </body>
 </html>
-```eof
-
-Drop this updated code into your GitHub `index.html`. Now, if a tab closes or crashes, the very next time you open the template, a subtle **"Restore" banner** will automatically drop down at the top of the page to recover all your hard work instantly!
