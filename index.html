@@ -243,8 +243,6 @@
 
             <!-- FEATURE STACK -->
             <section class="space-y-8 relative">
-                <h2 id="field_feature_title" contenteditable="true" data-name="Feature Title" data-max="65" data-min="10" data-required="true" class="text-xl font-bold text-center text-slate-900">Headline goes here</h2>
-                
                 <div class="space-y-8 max-w-sm mx-auto">
                     <!-- Ft1 -->
                     <div class="flex gap-4 items-start relative group">
@@ -580,7 +578,6 @@
                 sec_eyebrow: document.getElementById('field_sec_eyebrow').innerText,
                 sec_headline: document.getElementById('field_sec_headline').innerText,
                 sec_description: document.getElementById('field_sec_description').innerText,
-                f_t: document.getElementById('field_feature_title').innerText,
                 ft1_t: document.getElementById('field_ft1_title').innerText,
                 ft1_d: document.getElementById('field_ft1_desc').innerText,
                 ft2_t: document.getElementById('field_ft2_title').innerText,
@@ -639,7 +636,6 @@
                 field_sec_eyebrow: 'sec_eyebrow',
                 field_sec_headline: 'sec_headline',
                 field_sec_description: 'sec_description',
-                field_feature_title: 'f_t', 
                 field_ft1_title: 'ft1_t', 
                 field_ft1_desc: 'ft1_d', 
                 field_ft2_title: 'ft2_t', 
@@ -651,7 +647,8 @@
             };
             
             Object.keys(fields).forEach(id => { 
-                if(state[fields[id]] !== undefined) document.getElementById(id).innerText = state[fields[id]]; 
+                const el = document.getElementById(id);
+                if(el && state[fields[id]] !== undefined) el.innerText = state[fields[id]]; 
             });
 
             // Restore CTA texts verbatim
