@@ -112,6 +112,16 @@
                 </button>
             </div>
 
+            <!-- Workspace History Navigation Controls -->
+            <div class="flex items-center gap-1.5">
+                <button onclick="undo()" id="undoBtn" disabled class="disabled:opacity-40 disabled:cursor-not-allowed bg-slate-100 hover:bg-slate-200 text-slate-600 border border-slate-200/80 text-xs px-2.5 py-1.5 rounded-lg font-bold flex items-center gap-1" title="Undo change">
+                    <i class="fa-solid fa-arrow-left-long"></i> Back
+                </button>
+                <button onclick="redo()" id="redoBtn" disabled class="disabled:opacity-40 disabled:cursor-not-allowed bg-slate-100 hover:bg-slate-200 text-slate-600 border border-slate-200/80 text-xs px-2.5 py-1.5 rounded-lg font-bold flex items-center gap-1" title="Redo change">
+                    Forward <i class="fa-solid fa-arrow-right-long"></i>
+                </button>
+            </div>
+
             <div class="flex items-center gap-2">
                 <button onclick="restoreAllButtons()" id="restoreButtonsBtn" class="hidden bg-emerald-500 hover:bg-emerald-600 text-white text-xs px-3.5 py-2 rounded-lg font-bold flex items-center gap-1.5 transition-all shadow-md">
                     <i class="fa-solid fa-plus text-sm"></i> Restore Buttons
@@ -328,6 +338,12 @@
         let currentTargetImageId = '';
         let imageSources = { logo: { type: 'none', value: '' }, hero: { type: 'none', value: '' }, ft1: { type: 'none', value: '' }, ft2: { type: 'none', value: '' }, ft3: { type: 'none', value: '' }, closer: { type: 'none', value: '' } };
 
+        // History Management Stack state variables
+        let undoStack = [];
+        let redoStack = [];
+        let isHistoryOperation = false;
+        let historyTimeout = null;
+
         window.onload = function() {
             setupSpecTrackers();
             syncInboxPreviews();
@@ -338,12 +354,24 @@
             } else {
                 checkLocalWorkspaceBackup();
             }
+            
+            // Push initial layout state to baseline history
+            const initialState = JSON.stringify(getWorkspaceStateJSON());
+            undoStack.push(initialState);
+            updateHistoryButtons();
+
             setupAutoSaveTriggers();
         };
 
         function setupAutoSaveTriggers() {
             document.querySelectorAll('[contenteditable="true"]').forEach(el => {
-                el.addEventListener('input', () => { syncInboxPreviews(); saveStateToURL(true); });
+                el.addEventListener('input', () => { 
+                    syncInboxPreviews(); 
+                    saveStateToURL(true); 
+                    if (!isHistoryOperation) {
+                        debouncedPushToHistory();
+                    }
+                });
             });
         }
 
@@ -368,6 +396,12 @@
         function applyBackup() {
             loadStateFromURL('#state=' + localStorage.getItem('edm_workspace_backup'));
             document.getElementById('recoveryBanner').classList.add('hidden');
+            
+            // Log history baseline on restore action
+            undoStack = [JSON.stringify(getWorkspaceStateJSON())];
+            redoStack = [];
+            updateHistoryButtons();
+            
             showToast("Backup restored!");
         }
 
@@ -376,16 +410,111 @@
             document.getElementById('recoveryBanner').classList.add('hidden');
         }
 
+        // --- HISTORY TRACKING FUNCTIONS ---
+        function getWorkspaceStateJSON() {
+            const hiddenIds = [];
+            document.querySelectorAll('.cta-wrapper.hidden').forEach(el => {
+                const insideBtn = el.querySelector('[id]');
+                if(insideBtn) hiddenIds.push(insideBtn.id);
+            });
+            return {
+                subject: document.getElementById('field_subject').innerText,
+                preview: document.getElementById('field_preview_text').innerText,
+                wayfinder: document.getElementById('field_wayfinder').innerText,
+                eyebrow: document.getElementById('field_eyebrow').innerText,
+                headline: document.getElementById('field_headline').innerText,
+                accent: document.getElementById('field_headline_accent').innerText,
+                desc: document.getElementById('field_description').innerText,
+                disc: document.getElementById('field_disclaimer').innerText,
+                sec_eyebrow: document.getElementById('field_sec_eyebrow').innerText,
+                sec_headline: document.getElementById('field_sec_headline').innerText,
+                sec_description: document.getElementById('field_sec_description').innerText,
+                ft1_t: document.getElementById('field_ft1_title').innerText,
+                ft1_d: document.getElementById('field_ft1_desc').innerText,
+                ft2_t: document.getElementById('field_ft2_title').innerText,
+                ft2_d: document.getElementById('field_ft2_desc').innerText,
+                ft3_t: document.getElementById('field_ft3_title').innerText,
+                ft3_d: document.getElementById('field_ft3_desc').innerText,
+                cl_t: document.getElementById('field_closer_sub').innerText,
+                cl_d: document.getElementById('field_closer_desc').innerText,
+                btn_cta1_txt: document.getElementById('btn_cta1').innerText,
+                btn_cta2_txt: document.getElementById('btn_cta2').innerText,
+                btn_closer_cta_txt: document.getElementById('btn_closer_cta').innerText,
+                hides: hiddenIds,
+                imgs: JSON.parse(JSON.stringify(imageSources))
+            };
+        }
+
+        function debouncedPushToHistory() {
+            clearTimeout(historyTimeout);
+            historyTimeout = setTimeout(() => {
+                pushToHistory();
+            }, 300);
+        }
+
+        function pushToHistory() {
+            if (isHistoryOperation) return;
+            const currentState = JSON.stringify(getWorkspaceStateJSON());
+            
+            // Prevent duplicated history nodes
+            if (undoStack.length > 0 && undoStack[undoStack.length - 1] === currentState) return;
+            
+            undoStack.push(currentState);
+            if (undoStack.length > 50) undoStack.shift(); // Limit history buffer to 50 steps
+            redoStack = []; // Reset redo forward flow on raw input actions
+            updateHistoryButtons();
+        }
+
+        function updateHistoryButtons() {
+            document.getElementById('undoBtn').disabled = undoStack.length <= 1;
+            document.getElementById('redoBtn').disabled = redoStack.length === 0;
+        }
+
+        function undo() {
+            if (undoStack.length <= 1) return;
+            isHistoryOperation = true;
+            
+            const current = undoStack.pop();
+            redoStack.push(current);
+            
+            const previousState = JSON.parse(undoStack[undoStack.length - 1]);
+            loadStateFromJSON(previousState);
+            saveStateToURL(true);
+            
+            updateHistoryButtons();
+            isHistoryOperation = false;
+            showToast("Action undone");
+        }
+
+        function redo() {
+            if (redoStack.length === 0) return;
+            isHistoryOperation = true;
+            
+            const nextStateStr = redoStack.pop();
+            undoStack.push(nextStateStr);
+            
+            const nextState = JSON.parse(nextStateStr);
+            loadStateFromJSON(nextState);
+            saveStateToURL(true);
+            
+            updateHistoryButtons();
+            isHistoryOperation = false;
+            showToast("Action redone");
+        }
+        // ----------------------------------
+
         function toggleButtonVisibility(id) {
             document.getElementById(id).closest('.cta-wrapper').classList.toggle('hidden');
             updateRestoreButtonVisibility();
             saveStateToURL(true);
+            pushToHistory();
         }
 
         function restoreAllButtons() {
             document.querySelectorAll('.cta-wrapper').forEach(w => w.classList.remove('hidden'));
             updateRestoreButtonVisibility();
             saveStateToURL(true);
+            pushToHistory();
         }
 
         function updateRestoreButtonVisibility() {
@@ -428,6 +557,7 @@
                     const compressedBase64 = canvas.toDataURL('image/jpeg', 0.65);
                     applyImageToElement(targetId, 'url', compressedBase64);
                     saveStateToURL(true);
+                    pushToHistory();
                 };
                 img.src = event.target.result;
             };
@@ -449,6 +579,7 @@
                 applyImageToElement(currentTargetImageId, 'url', val);
                 closeImageManager();
                 saveStateToURL(true);
+                pushToHistory();
             } else { closeImageManager(); }
         }
 
@@ -465,7 +596,12 @@
             else { imgEl.src = val; imgEl.classList.remove('hidden'); svgEl.classList.add('hidden'); }
         }
 
-        function clearImageSelection() { applyImageToElement(currentTargetImageId, 'none', ''); closeImageManager(); saveStateToURL(true); }
+        function clearImageSelection() { 
+            applyImageToElement(currentTargetImageId, 'none', ''); 
+            closeImageManager(); 
+            saveStateToURL(true); 
+            pushToHistory();
+        }
 
         function setupSpecTrackers() {
             const bubble = document.getElementById('specBubble');
