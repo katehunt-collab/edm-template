@@ -39,19 +39,6 @@
             .shadow-xl { box-shadow: none !important; }
         }
 
-        .section-label {
-            position: absolute;
-            left: -120px;
-            top: 20px;
-            width: 100px;
-            text-align: right;
-            font-size: 11px;
-            font-weight: 800;
-            color: #94a3b8;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-
         /* Viewport and Theme transition animations */
         .preview-viewport-transition { transition: max-width 0.4s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.3s ease; }
         
@@ -88,7 +75,7 @@
         </div>
     </div>
 
-    <!-- Header Actions Panel with Viewport and Dark Mode Controls -->
+    <!-- Header Actions Panel with Viewport, History, and Dark Mode Controls -->
     <div class="no-print w-full max-w-xl mb-4 p-4 bg-white border border-slate-200 rounded-2xl shadow-sm flex flex-col gap-4">
         <div class="flex items-center justify-between">
             <div>
@@ -183,8 +170,6 @@
 
             <!-- HERO SECTION -->
             <header class="text-center space-y-6 relative">
-                <div class="section-label no-print">Hero</div>
-                
                 <!-- Logo -->
                 <div class="relative mx-auto inline-block">
                     <div onclick="openImageManager('logo')" class="placeholder-box w-32 h-10 rounded-lg flex flex-col items-center justify-center overflow-hidden border border-slate-200">
@@ -239,7 +224,6 @@
 
             <!-- SECTION HEADER BLOCK -->
             <section class="text-center space-y-4 pt-2 pb-4 relative">
-                <div class="section-label no-print">Section Header</div>
                 <div class="space-y-1">
                     <p id="field_sec_eyebrow" contenteditable="true" data-name="Section Eyebrow" data-max="40" data-min="0" data-required="false" class="text-sm font-semibold text-slate-500">Eyebrow</p>
                     <h2 class="text-2xl font-extrabold leading-tight tracking-tight text-slate-900 px-4">
@@ -292,7 +276,6 @@
 
             <!-- CLOSER SECTION -->
             <section class="pt-8 relative">
-                <div class="section-label no-print">Closer</div>
                 <div class="bg-slate-50/50 rounded-3xl p-8 text-center border border-slate-100 flex flex-col items-center space-y-4">
                     <div onclick="openImageManager('closer')" class="placeholder-box w-12 h-12 rounded-xl flex items-center justify-center shadow-sm overflow-hidden">
                         <img id="closer-img" class="hidden w-full h-full object-cover" onerror="handleImageError(this)" />
@@ -381,7 +364,7 @@
                 el.addEventListener('paste', function(e) {
                     e.preventDefault();
                     const text = (e.originalEvent || e).clipboardData.getData('text/plain');
-                    const isSingleLine = el.tagName === 'SPAN' || el.id.includes('subject') || el.id.includes('preview') || el.id.includes('title') || el.id.includes('btn') || el.id.includes('eyebrow') || el.id.includes('wayfinder');
+                    const isSingleLine = el.id.includes('subject') || el.id.includes('preview') || el.id.includes('title') || el.id.includes('btn') || el.id.includes('eyebrow') || el.id.includes('wayfinder');
                     const cleanedText = isSingleLine ? text.replace(/\r?\n|\r/g, " ") : text;
                     document.execCommand('insertText', false, cleanedText);
                     el.dispatchEvent(new Event('input', { bubbles: true }));
@@ -699,38 +682,6 @@
                 icon.className = "fa-solid fa-moon";
                 label.innerText = "Dark Mode Off";
             }
-        }
-
-        function getWorkspaceStateJSON() {
-            return {
-                subject: document.getElementById('field_subject').innerText,
-                preview: document.getElementById('field_preview_text').innerText,
-                wayfinder: document.getElementById('field_wayfinder').innerText,
-                eyebrow: document.getElementById('field_eyebrow').innerText,
-                headline: document.getElementById('field_headline').innerText,
-                accent: document.getElementById('field_headline_accent').innerText,
-                desc: document.getElementById('field_description').innerText,
-                disc: document.getElementById('field_disclaimer').innerText,
-                sec_eyebrow: document.getElementById('field_sec_eyebrow').innerText,
-                sec_headline: document.getElementById('field_sec_headline').innerText,
-                sec_description: document.getElementById('field_sec_description').innerText,
-                ft1_t: document.getElementById('field_ft1_title').innerText,
-                ft1_d: document.getElementById('field_ft1_desc').innerText,
-                ft2_t: document.getElementById('field_ft2_title').innerText,
-                ft2_d: document.getElementById('field_ft2_desc').innerText,
-                ft3_t: document.getElementById('field_ft3_title').innerText,
-                ft3_d: document.getElementById('field_ft3_desc').innerText,
-                cl_t: document.getElementById('field_closer_sub').innerText,
-                cl_d: document.getElementById('field_closer_desc').innerText,
-                btn_cta1_txt: document.getElementById('btn_cta1').innerText,
-                btn_cta2_txt: document.getElementById('btn_cta2').innerText,
-                btn_closer_cta_txt: document.getElementById('btn_closer_cta').innerText,
-                hides: Array.from(document.querySelectorAll('.cta-wrapper.hidden')).map(el => {
-                    const child = el.querySelector('[id]');
-                    return child ? child.id : null;
-                }).filter(id => id),
-                imgs: imageSources
-            };
         }
 
         function saveStateToURL(silent = false) {
