@@ -9,7 +9,7 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=SF+Pro+Text:wght@400;500;600&display=swap');
         
-        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; color: #0f172a; }
+        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; color: #0f172a; transition: background-color 0.3s ease; }
         .font-sf { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
         
         [contenteditable="true"] { outline: none; transition: all 0.2s; }
@@ -26,8 +26,8 @@
             overflow: hidden;
         }
         .placeholder-box:hover { border-color: #3b82f6; background-color: #f0fdf4; cursor: pointer; }
-        .placeholder-box.drag-over { border-color: #10b981; background-color: #ecfdf5; }
         
+        /* Interactive Spec Overlays */
         .spec-popup { position: absolute; bottom: calc(100% + 12px); left: 50%; transform: translateX(-50%); z-index: 50; pointer-events: none; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); }
         
         .btn-pill { display: inline-block; background-color: #2563eb; color: white; padding: 0.75rem 2rem; border-radius: 9999px; font-weight: 600; text-align: center; border: 2px solid #2563eb; transition: all 0.2s; }
@@ -51,54 +51,83 @@
             text-transform: uppercase;
             letter-spacing: 0.05em;
         }
+
+        /* Viewport and Theme transition animations */
+        .preview-viewport-transition { transition: max-width 0.4s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.3s ease; }
+        
+        /* Dark Mode Email Client Overrides */
+        .dark-email-client { background-color: #1e293b !important; color: #f8fafc !important; }
+        .dark-email-client .bg-white { background-color: #0f172a !important; }
+        .dark-email-client .text-slate-900 { color: #f8fafc !important; }
+        .dark-email-client .text-slate-500 { color: #94a3b8 !important; }
+        .dark-email-client .text-slate-600 { color: #cbd5e1 !important; }
+        .dark-email-client .bg-slate-50 { background-color: #1e293b !important; }
+        .dark-email-client .border-slate-100, .dark-email-client .border-slate-200 { border-color: #334155 !important; }
+        .dark-email-client .btn-pill-secondary { background-color: #1e293b !important; color: #60a5fa !important; border-color: #334155 !important; }
     </style>
 </head>
 <body class="p-4 md:p-8 flex flex-col items-center">
 
-    <!-- Auto-Save Notification Toast -->
     <div id="toastNotification" class="no-print fixed top-5 left-1/2 -translate-x-1/2 -translate-y-24 bg-slate-900/95 text-white text-xs px-5 py-3 rounded-full shadow-2xl z-50 flex items-center gap-3 transition-all duration-500 border border-slate-700/50 backdrop-blur-sm">
         <span class="w-2 h-2 bg-emerald-500 rounded-full animate-ping"></span>
         <span id="toastText" class="font-medium">Changes Auto-Saved!</span>
     </div>
 
-    <!-- Backup Recovery Alert Banner -->
+    <!-- Recovery Banner -->
     <div id="recoveryBanner" class="no-print hidden w-full max-w-xl mb-4 p-3.5 bg-amber-50 border border-amber-200 rounded-2xl flex items-center justify-between gap-3 text-xs shadow-sm">
         <div class="flex items-center gap-2.5 text-amber-800">
             <i class="fa-solid fa-clock-rotate-left text-base text-amber-600"></i>
             <div>
-                <p class="font-bold">Unsaved local backup found!</p>
-                <p class="text-amber-700/80">Would you like to restore your last session copy and images?</p>
+                <p class="font-bold">Unsaved backup found!</p>
+                <p class="text-amber-700/80">Would you like to restore your last session?</p>
             </div>
         </div>
         <div class="flex items-center gap-2 shrink-0">
             <button onclick="dismissBackup()" class="px-2.5 py-1.5 rounded-lg text-amber-700 hover:bg-amber-100 font-semibold">Discard</button>
-            <button onclick="applyBackup()" class="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-bold shadow-sm shadow-amber-600/10">Restore</button>
+            <button onclick="applyBackup()" class="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-bold shadow-sm">Restore</button>
         </div>
     </div>
 
-    <!-- Action Header Bar -->
-    <div class="no-print w-full max-w-xl mb-6 p-4 bg-white border border-slate-200 rounded-2xl shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
-        <div>
-            <h2 class="text-sm font-bold text-slate-800 flex items-center gap-1.5">
-                <span class="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse"></span> Think with Google APAC
-            </h2>
-            <p class="text-xs text-slate-500">Workspace auto-saves in real-time. Just copy the URL to share.</p>
+    <!-- Header Actions Panel with Viewport and Dark Mode Controls -->
+    <div class="no-print w-full max-w-xl mb-4 p-4 bg-white border border-slate-200 rounded-2xl shadow-sm flex flex-col gap-4">
+        <div class="flex items-center justify-between">
+            <div>
+                <h2 class="text-sm font-bold text-slate-800 flex items-center gap-1.5">
+                    <span class="w-2.5 h-2.5 bg-blue-500 rounded-full animate-pulse"></span> Think with Google APAC
+                </h2>
+                <p class="text-xs text-slate-500">Workspace handles dark mode & device simulator tests.</p>
+            </div>
         </div>
-        <div class="flex items-center gap-2">
-            <button onclick="restoreAllButtons()" id="restoreButtonsBtn" class="hidden bg-emerald-500 hover:bg-emerald-600 text-white text-xs px-3.5 py-2 rounded-lg font-bold flex items-center gap-1.5 transition-all shadow-md">
-                <i class="fa-solid fa-plus text-sm"></i> Restore Buttons
-            </button>
-            <button onclick="triggerCopyLink()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3.5 py-2 rounded-lg font-bold flex items-center gap-2 transition-all shadow-md">
-                <i class="fa-solid fa-link text-sm"></i> Copy Link
-            </button>
-            <button onclick="window.print()" class="bg-slate-800 hover:bg-slate-950 text-white text-xs px-3.5 py-2 rounded-lg font-semibold flex items-center gap-1.5 transition-all">
-                <i class="fa-solid fa-print"></i> Export
-            </button>
+        
+        <div class="border-t border-slate-100 pt-3 flex flex-wrap items-center justify-between gap-3">
+            <!-- Simulator Toggles -->
+            <div class="flex items-center gap-2">
+                <div class="flex items-center bg-slate-100 p-1 rounded-lg">
+                    <button onclick="setViewport('mobile')" id="vpMobile" class="p-1.5 rounded text-blue-600 bg-white shadow-sm text-xs flex items-center gap-1 font-semibold" title="Phone view (380px)"><i class="fa-solid fa-mobile-screen"></i> Mobile</button>
+                    <button onclick="setViewport('desktop')" id="vpDesktop" class="p-1.5 rounded text-slate-500 hover:text-slate-800 text-xs flex items-center gap-1 font-semibold" title="Desktop view (600px)"><i class="fa-solid fa-desktop"></i> Desktop</button>
+                </div>
+                
+                <button onclick="toggleDarkMode()" id="darkModeToggle" class="p-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-xs font-bold flex items-center gap-1" title="Toggle Dark Mode Simulation">
+                    <i id="darkModeIcon" class="fa-solid fa-moon"></i> <span id="darkModeLabel">Dark Mode Off</span>
+                </button>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <button onclick="restoreAllButtons()" id="restoreButtonsBtn" class="hidden bg-emerald-500 hover:bg-emerald-600 text-white text-xs px-3.5 py-2 rounded-lg font-bold flex items-center gap-1.5 transition-all shadow-md">
+                    <i class="fa-solid fa-plus text-sm"></i> Restore Buttons
+                </button>
+                <button onclick="triggerCopyLink()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3.5 py-2 rounded-lg font-bold flex items-center gap-2 transition-all shadow-md">
+                    <i class="fa-solid fa-link text-sm"></i> Copy Link
+                </button>
+                <button onclick="window.print()" class="bg-slate-800 hover:bg-slate-950 text-white text-xs px-3.5 py-2 rounded-lg font-semibold flex items-center gap-1.5 transition-all">
+                    <i class="fa-solid fa-print"></i> Export
+                </button>
+            </div>
         </div>
     </div>
 
-    <!-- Main Workspace -->
-    <div class="w-full max-w-xl relative">
+    <!-- Main Workspace Viewport Wrapper -->
+    <div id="workspaceContainer" class="w-full max-w-[380px] relative preview-viewport-transition">
         <div id="specBubble" class="spec-popup hidden bg-slate-900 text-white px-3 py-2 rounded-xl shadow-xl text-xs font-medium border border-slate-700/50 flex flex-col gap-0.5">
             <span id="specName" class="font-bold text-blue-400 text-[10px] uppercase tracking-wider">Field Specs</span>
             <div class="flex items-center gap-3">
@@ -107,11 +136,11 @@
             </div>
         </div>
 
-        <!-- The Email Card -->
-        <div class="bg-white shadow-xl rounded-3xl overflow-hidden border border-slate-100 p-8 space-y-8 relative">
+        <!-- The Email Card container with support for dark modes -->
+        <div id="emailCard" class="bg-white shadow-xl rounded-3xl overflow-hidden border border-slate-100 p-8 space-y-8 relative transition-all duration-300">
             
-            <!-- Mobile Inbox Simulator -->
-            <div class="bg-slate-50 rounded-2xl p-4 border border-slate-200/60 font-sf space-y-3">
+            <!-- Mobile Inbox Simulator (Non-printable inside Desktop Viewport simulation) -->
+            <div id="inboxSimulator" class="bg-slate-50 rounded-2xl p-4 border border-slate-200/60 font-sf space-y-3">
                 <div class="flex items-center justify-between text-[11px] text-slate-400 font-medium pb-2 border-b border-slate-200/50">
                     <span class="flex items-center gap-1.5 font-bold uppercase"><i class="fa-solid fa-mobile-screen-button"></i> Mobile Inbox Preview</span>
                 </div>
@@ -123,20 +152,20 @@
                             <span class="text-[11px] text-slate-400 font-medium">Just now</span>
                         </div>
                         <div class="text-[13px] font-bold text-slate-900 truncate mt-0.5" id="inboxSubject">Subject Line Placeholder</div>
-                        <div class="text-[13px] text-slate-500 truncate mt-0.5" id="inboxPreviewText">Preview Text Placeholder next to subject line...</div>
+                        <div class="text-[13px] text-slate-500 truncate mt-0.5" id="inboxPreviewText">Preview Text Placeholder...</div>
                     </div>
                 </div>
             </div>
 
             <!-- Subject/Preview Editors -->
-            <div class="bg-slate-50/50 rounded-2xl p-5 border border-slate-100 grid grid-cols-1 gap-5">
+            <div id="editorsPanel" class="bg-slate-50/50 rounded-2xl p-5 border border-slate-100 grid grid-cols-1 gap-5">
                 <div class="relative">
                     <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Subject Line (50 char max)</label>
-                    <div id="field_subject" contenteditable="true" data-name="Subject line" data-max="50" data-min="0" data-required="true" class="bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-800 focus:border-blue-500 shadow-sm">Subject Line Placeholder</div>
+                    <div id="field_subject" contenteditable="true" data-name="Subject line" data-max="50" data-min="0" data-required="true" class="bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-800 focus:border-blue-500 shadow-sm transition-colors">Subject Line Placeholder</div>
                 </div>
                 <div class="relative">
                     <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Preview Text</label>
-                    <div id="field_preview_text" contenteditable="true" data-name="Preview Text" data-max="150" data-min="0" data-required="false" class="bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-600 focus:border-blue-500 shadow-sm">Preview Text Placeholder next to subject line...</div>
+                    <div id="field_preview_text" contenteditable="true" data-name="Preview Text" data-max="150" data-min="0" data-required="false" class="bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-600 focus:border-blue-500 shadow-sm transition-colors">Preview Text Placeholder next to subject line...</div>
                 </div>
             </div>
 
@@ -146,10 +175,10 @@
             <header class="text-center space-y-6 relative">
                 <div class="section-label no-print">Hero</div>
                 
-                <!-- Logo PlaceHolder Box -->
+                <!-- Logo -->
                 <div class="relative mx-auto inline-block">
-                    <div onclick="openImageManager('logo')" data-id="logo" class="placeholder-box drop-target w-32 h-10 rounded-lg flex flex-col items-center justify-center overflow-hidden border border-slate-200">
-                        <img id="logo-img" class="hidden w-full h-full object-contain p-1" onerror="handleImageError(this, 'logo')" />
+                    <div onclick="openImageManager('logo')" class="placeholder-box w-32 h-10 rounded-lg flex flex-col items-center justify-center overflow-hidden border border-slate-200">
+                        <img id="logo-img" class="hidden w-full h-full object-contain p-1" onerror="handleImageError(this)" />
                         <div id="logo-svg" class="flex flex-col items-center justify-center text-slate-400 opacity-60">
                             <svg width="24" height="24" viewBox="0 0 100 100" class="stroke-current fill-none"><circle cx="50" cy="50" r="24" stroke-width="2"/><circle cx="38" cy="50" r="24" stroke-width="2"/><circle cx="62" cy="50" r="24" stroke-width="2"/></svg>
                         </div>
@@ -183,18 +212,34 @@
                 <p id="field_disclaimer" contenteditable="true" data-name="Disclaimer" data-max="115" data-min="55" data-required="false" class="text-[10px] text-slate-400 italic">*disclaimer text lorem ipsum</p>
             </header>
 
-            <!-- Hero Image PlaceHolder Box -->
+            <!-- Hero Image -->
             <div class="px-2">
-                <div onclick="openImageManager('hero')" data-id="hero" class="placeholder-box drop-target w-full aspect-[16/9] rounded-3xl flex items-center justify-center relative shadow-sm overflow-hidden">
-                    <img id="hero-img" class="hidden w-full h-full object-cover" onerror="handleImageError(this, 'hero')" />
+                <div onclick="openImageManager('hero')" class="placeholder-box w-full aspect-[16/9] rounded-3xl flex items-center justify-center relative shadow-sm overflow-hidden">
+                    <img id="hero-img" class="hidden w-full h-full object-cover" onerror="handleImageError(this)" />
                     <div id="hero-svg" class="flex items-center justify-center">
                         <svg width="100" height="100" viewBox="0 0 100 100" class="text-slate-300 opacity-80 stroke-current fill-none">
                             <circle cx="50" cy="50" r="32" stroke-width="1.5"/><circle cx="34" cy="50" r="32" stroke-width="1.5"/><circle cx="66" cy="50" r="32" stroke-width="1.5"/><circle cx="50" cy="34" r="32" stroke-width="1.5"/><circle cx="50" cy="66" r="32" stroke-width="1.5"/>
                         </svg>
                     </div>
-                    <span class="absolute bottom-3 right-3 text-[9px] bg-slate-900/60 text-white font-mono px-2 py-1 rounded-full uppercase no-print">Ratio 1:1</span>
+                    <span class="absolute bottom-3 right-3 text-[9px] bg-slate-900/60 text-white font-mono px-2 py-1 rounded-full uppercase">Ratio 1:1</span>
                 </div>
             </div>
+
+            <div class="border-t border-dashed border-slate-200"></div>
+
+            <!-- SECTION HEADER BLOCK -->
+            <section class="text-center space-y-4 pt-2 pb-4 relative">
+                <div class="section-label no-print">Section Header</div>
+                <div class="space-y-1">
+                    <p id="field_sec_eyebrow" contenteditable="true" data-name="Section Eyebrow" data-max="40" data-min="0" data-required="false" class="text-sm font-semibold text-slate-500">Eyebrow</p>
+                    <h2 class="text-2xl font-extrabold leading-tight tracking-tight text-slate-900 px-4">
+                        <span id="field_sec_headline" contenteditable="true" data-name="Section Headline" data-max="40" data-min="16" data-required="true" class="block">Stay ahead in the AI era</span>
+                    </h2>
+                </div>
+                <p id="field_sec_description" contenteditable="true" data-name="Section Description" data-max="115" data-min="55" data-required="false" class="text-slate-500 text-sm leading-relaxed max-w-sm mx-auto">
+                    Explore the latest on Search, YouTube and Measurement
+                </p>
+            </section>
 
             <!-- FEATURE STACK -->
             <section class="space-y-8 relative">
@@ -203,8 +248,8 @@
                 <div class="space-y-8 max-w-sm mx-auto">
                     <!-- Ft1 -->
                     <div class="flex gap-4 items-start relative group">
-                        <div onclick="openImageManager('ft1')" data-id="ft1" class="placeholder-box drop-target shrink-0 w-12 h-12 rounded-xl flex items-center justify-center shadow-sm overflow-hidden">
-                            <img id="ft1-img" class="hidden w-full h-full object-cover" onerror="handleImageError(this, 'ft1')" />
+                        <div onclick="openImageManager('ft1')" class="placeholder-box shrink-0 w-12 h-12 rounded-xl flex items-center justify-center shadow-sm overflow-hidden">
+                            <img id="ft1-img" class="hidden w-full h-full object-cover" onerror="handleImageError(this)" />
                             <div id="ft1-svg" class="flex items-center justify-center"><i class="fa-solid fa-plus text-slate-300"></i></div>
                         </div>
                         <div class="space-y-1">
@@ -214,8 +259,8 @@
                     </div>
                     <!-- Ft2 -->
                     <div class="flex gap-4 items-start relative group">
-                        <div onclick="openImageManager('ft2')" data-id="ft2" class="placeholder-box drop-target shrink-0 w-12 h-12 rounded-xl flex items-center justify-center shadow-sm overflow-hidden">
-                            <img id="ft2-img" class="hidden w-full h-full object-cover" onerror="handleImageError(this, 'ft2')" />
+                        <div onclick="openImageManager('ft2')" class="placeholder-box shrink-0 w-12 h-12 rounded-xl flex items-center justify-center shadow-sm overflow-hidden">
+                            <img id="ft2-img" class="hidden w-full h-full object-cover" onerror="handleImageError(this)" />
                             <div id="ft2-svg" class="flex items-center justify-center"><i class="fa-solid fa-plus text-slate-300"></i></div>
                         </div>
                         <div class="space-y-1">
@@ -225,8 +270,8 @@
                     </div>
                     <!-- Ft3 -->
                     <div class="flex gap-4 items-start relative group">
-                        <div onclick="openImageManager('ft3')" data-id="ft3" class="placeholder-box drop-target shrink-0 w-12 h-12 rounded-xl flex items-center justify-center shadow-sm overflow-hidden">
-                            <img id="ft3-img" class="hidden w-full h-full object-cover" onerror="handleImageError(this, 'ft3')" />
+                        <div onclick="openImageManager('ft3')" class="placeholder-box shrink-0 w-12 h-12 rounded-xl flex items-center justify-center shadow-sm overflow-hidden">
+                            <img id="ft3-img" class="hidden w-full h-full object-cover" onerror="handleImageError(this)" />
                             <div id="ft3-svg" class="flex items-center justify-center"><i class="fa-solid fa-plus text-slate-300"></i></div>
                         </div>
                         <div class="space-y-1">
@@ -241,8 +286,8 @@
             <section class="pt-8 relative">
                 <div class="section-label no-print">Closer</div>
                 <div class="bg-slate-50/50 rounded-3xl p-8 text-center border border-slate-100 flex flex-col items-center space-y-4">
-                    <div onclick="openImageManager('closer')" data-id="closer" class="placeholder-box drop-target w-12 h-12 rounded-xl flex items-center justify-center shadow-sm overflow-hidden">
-                        <img id="closer-img" class="hidden w-full h-full object-cover" onerror="handleImageError(this, 'closer')" />
+                    <div onclick="openImageManager('closer')" class="placeholder-box w-12 h-12 rounded-xl flex items-center justify-center shadow-sm overflow-hidden">
+                        <img id="closer-img" class="hidden w-full h-full object-cover" onerror="handleImageError(this)" />
                         <div id="closer-svg" class="flex items-center justify-center"><i class="fa-solid fa-plus text-slate-300"></i></div>
                     </div>
                     <h2 id="field_closer_sub" contenteditable="true" data-name="Subheadline" data-max="60" data-min="16" data-required="true" class="text-lg font-extrabold text-slate-900 max-w-sm">Lorem ipsum dolor sit amet consectetur</h2>
@@ -288,9 +333,8 @@
         window.onload = function() {
             setupSpecTrackers();
             syncInboxPreviews();
-            setupDragAndDrop();
+            setupPasteSanitizer();
             
-            // Check if loading straight from an shared hash URL or fallback to memory
             if (window.location.hash.startsWith('#state=')) {
                 loadStateFromURL(window.location.hash);
             } else {
@@ -302,6 +346,20 @@
         function setupAutoSaveTriggers() {
             document.querySelectorAll('[contenteditable="true"]').forEach(el => {
                 el.addEventListener('input', () => { syncInboxPreviews(); saveStateToURL(true); });
+            });
+        }
+
+        /* plain text paste filter */
+        function setupPasteSanitizer() {
+            document.querySelectorAll('[contenteditable="true"]').forEach(el => {
+                el.addEventListener('paste', function(e) {
+                    e.preventDefault();
+                    const text = (e.originalEvent || e).clipboardData.getData('text/plain');
+                    const isSingleLine = el.tagName === 'SPAN' || el.id.includes('subject') || el.id.includes('preview') || el.id.includes('title') || el.id.includes('btn') || el.id.includes('eyebrow') || el.id.includes('wayfinder');
+                    const cleanedText = isSingleLine ? text.replace(/\r?\n|\r/g, " ") : text;
+                    document.execCommand('insertText', false, cleanedText);
+                    el.dispatchEvent(new Event('input', { bubbles: true }));
+                });
             });
         }
 
@@ -344,7 +402,6 @@
 
         function closeImageManager() { document.getElementById('imageModal').classList.add('hidden'); }
 
-        // Core HTML5 Canvas image compressor (downsamples large files to ultra-light JPEGs)
         function compressAndApplyImage(file, targetId) {
             const reader = new FileReader();
             reader.onload = function(event) {
@@ -354,7 +411,6 @@
                     let width = img.width;
                     let height = img.height;
                     
-                    // Constrain maximum width/height to keep Base64 footprint lightweight
                     const maxDim = 500;
                     if (width > maxDim || height > maxDim) {
                         if (width > height) {
@@ -371,42 +427,13 @@
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, width, height);
                     
-                    // Compress image to optimized web-standard JPEG
                     const compressedBase64 = canvas.toDataURL('image/jpeg', 0.65);
-                    
-                    applyImageToElement(targetId, 'local', compressedBase64);
+                    applyImageToElement(targetId, 'url', compressedBase64);
                     saveStateToURL(true);
                 };
                 img.src = event.target.result;
             };
             reader.readAsDataURL(file);
-        }
-
-        // Setup Drag & Drop handlers directly on the placeholder containers
-        function setupDragAndDrop() {
-            const dropTargets = document.querySelectorAll('.drop-target');
-            
-            dropTargets.forEach(target => {
-                target.addEventListener('dragover', (e) => {
-                    e.preventDefault();
-                    target.classList.add('drag-over');
-                });
-                
-                target.addEventListener('dragleave', () => {
-                    target.classList.remove('drag-over');
-                });
-                
-                target.addEventListener('drop', (e) => {
-                    e.preventDefault();
-                    target.classList.remove('drag-over');
-                    const targetId = target.getAttribute('data-id');
-                    
-                    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-                        compressAndApplyImage(e.dataTransfer.files[0], targetId);
-                        showToast("Image uploaded and auto-compressed!");
-                    }
-                });
-            });
         }
 
         function saveImageSelection() {
@@ -427,12 +454,9 @@
             } else { closeImageManager(); }
         }
 
-        function handleImageError(img, targetId) {
-            // Error Guard: If the image failed to load, revert it cleanly and prevent the broken file icon
-            img.classList.add('hidden');
-            const svgEl = document.getElementById(`${targetId}-svg`);
-            if (svgEl) svgEl.classList.remove('hidden');
-            console.warn(`External image failed to load for target ID: ${targetId}`);
+        function handleImageError(img) {
+            const idMatch = img.src.match(/id=([^\&]+)/);
+            if (idMatch && idMatch[1]) img.src = `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w1000`;
         }
 
         function applyImageToElement(id, type, val) {
@@ -467,6 +491,7 @@
 
         function updateCounter(el) {
             const txt = el.innerText.trim();
+            const len = txt.length;
             const max = parseInt(el.getAttribute('data-max'));
             const words = parseInt(el.getAttribute('data-words'));
             const counter = document.getElementById('specCounter');
@@ -474,10 +499,22 @@
             if (words) {
                 const count = txt.split(/\s+/).filter(w => w).length;
                 counter.innerText = `${count}/${words} words`;
-                counter.className = count > words ? "bg-red-500 text-white px-1.5 py-0.5 rounded" : "bg-emerald-500 text-white px-1.5 py-0.5 rounded";
+                if (count > words) {
+                    counter.className = "bg-red-500 text-white px-1.5 py-0.5 rounded";
+                    el.classList.add('border-red-500', 'ring-2', 'ring-red-100');
+                } else {
+                    counter.className = "bg-emerald-500 text-white px-1.5 py-0.5 rounded";
+                    el.classList.remove('border-red-500', 'ring-2', 'ring-red-100');
+                }
             } else {
-                counter.innerText = `${txt.length}/${max} chars`;
-                counter.className = txt.length > max ? "bg-red-500 text-white px-1.5 py-0.5 rounded" : "bg-emerald-500 text-white px-1.5 py-0.5 rounded";
+                counter.innerText = `${len}/${max} chars`;
+                if (len > max) {
+                    counter.className = "bg-red-500 text-white px-1.5 py-0.5 rounded";
+                    el.classList.add('border-red-500', 'ring-2', 'ring-red-100');
+                } else {
+                    counter.className = "bg-emerald-500 text-white px-1.5 py-0.5 rounded";
+                    el.classList.remove('border-red-500', 'ring-2', 'ring-red-100');
+                }
             }
         }
 
@@ -486,43 +523,92 @@
             document.getElementById('inboxPreviewText').innerText = document.getElementById('field_preview_text').innerText;
         }
 
-        function saveStateToURL(silent = false) {
-            try {
-                const state = {
-                    subject: document.getElementById('field_subject').innerText,
-                    preview: document.getElementById('field_preview_text').innerText,
-                    wayfinder: document.getElementById('field_wayfinder').innerText,
-                    eyebrow: document.getElementById('field_eyebrow').innerText,
-                    headline: document.getElementById('field_headline').innerText,
-                    accent: document.getElementById('field_headline_accent').innerText,
-                    desc: document.getElementById('field_description').innerText,
-                    disc: document.getElementById('field_disclaimer').innerText,
-                    f_t: document.getElementById('field_feature_title').innerText,
-                    ft1_t: document.getElementById('field_ft1_title').innerText,
-                    ft1_d: document.getElementById('field_ft1_desc').innerText,
-                    ft2_t: document.getElementById('field_ft2_title').innerText,
-                    ft2_d: document.getElementById('field_ft2_desc').innerText,
-                    ft3_t: document.getElementById('field_ft3_title').innerText,
-                    ft3_d: document.getElementById('field_ft3_desc').innerText,
-                    cl_t: document.getElementById('field_closer_sub').innerText,
-                    cl_d: document.getElementById('field_closer_desc').innerText,
-                    hides: Array.from(document.querySelectorAll('.cta-wrapper.hidden')).map(el => el.querySelector('[id]').id),
-                    imgs: imageSources
-                };
-                
-                const jsonStr = JSON.stringify(state);
-                const hash = btoa(unescape(encodeURIComponent(jsonStr)));
-                
-                // Keep URL updated for simple clipboard sharing
-                window.location.hash = `state=${hash}`;
-                
-                // Store robust high-fidelity backup into Local Memory
-                localStorage.setItem('edm_workspace_backup', hash);
-                
-                if (!silent) showToast("Changes saved successfully!");
-            } catch (err) {
-                console.error("Save system error:", err);
+        /* set viewport simulator device size width */
+        function setViewport(device) {
+            const container = document.getElementById('workspaceContainer');
+            const mobileBtn = document.getElementById('vpMobile');
+            const desktopBtn = document.getElementById('vpDesktop');
+            const inboxSim = document.getElementById('inboxSimulator');
+            const editors = document.getElementById('editorsPanel');
+
+            if (device === 'mobile') {
+                container.style.maxWidth = '380px';
+                mobileBtn.className = "p-1.5 rounded text-blue-600 bg-white shadow-sm text-xs flex items-center gap-1 font-semibold";
+                desktopBtn.className = "p-1.5 rounded text-slate-500 hover:text-slate-800 text-xs flex items-center gap-1 font-semibold";
+                inboxSim.classList.remove('hidden');
+                editors.classList.remove('hidden');
+            } else {
+                container.style.maxWidth = '600px';
+                desktopBtn.className = "p-1.5 rounded text-blue-600 bg-white shadow-sm text-xs flex items-center gap-1 font-semibold";
+                mobileBtn.className = "p-1.5 rounded text-slate-500 hover:text-slate-800 text-xs flex items-center gap-1 font-semibold";
+                inboxSim.classList.add('hidden');
+                editors.classList.add('hidden');
             }
+        }
+
+        /* toggle dark mode simulation state */
+        function toggleDarkMode() {
+            const card = document.getElementById('emailCard');
+            const btn = document.getElementById('darkModeToggle');
+            const icon = document.getElementById('darkModeIcon');
+            const label = document.getElementById('darkModeLabel');
+
+            card.classList.toggle('dark-email-client');
+            const isDark = card.classList.contains('dark-email-client');
+
+            if (isDark) {
+                btn.className = "p-2 bg-slate-800 hover:bg-slate-700 text-amber-400 rounded-lg text-xs font-bold flex items-center gap-1";
+                icon.className = "fa-solid fa-sun";
+                label.innerText = "Dark Mode On";
+            } else {
+                btn.className = "p-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-xs font-bold flex items-center gap-1";
+                icon.className = "fa-solid fa-moon";
+                label.innerText = "Dark Mode Off";
+            }
+        }
+
+        function getWorkspaceStateJSON() {
+            return {
+                subject: document.getElementById('field_subject').innerText,
+                preview: document.getElementById('field_preview_text').innerText,
+                wayfinder: document.getElementById('field_wayfinder').innerText,
+                eyebrow: document.getElementById('field_eyebrow').innerText,
+                headline: document.getElementById('field_headline').innerText,
+                accent: document.getElementById('field_headline_accent').innerText,
+                desc: document.getElementById('field_description').innerText,
+                disc: document.getElementById('field_disclaimer').innerText,
+                sec_eyebrow: document.getElementById('field_sec_eyebrow').innerText,
+                sec_headline: document.getElementById('field_sec_headline').innerText,
+                sec_description: document.getElementById('field_sec_description').innerText,
+                f_t: document.getElementById('field_feature_title').innerText,
+                ft1_t: document.getElementById('field_ft1_title').innerText,
+                ft1_d: document.getElementById('field_ft1_desc').innerText,
+                ft2_t: document.getElementById('field_ft2_title').innerText,
+                ft2_d: document.getElementById('field_ft2_desc').innerText,
+                ft3_t: document.getElementById('field_ft3_title').innerText,
+                ft3_d: document.getElementById('field_ft3_desc').innerText,
+                cl_t: document.getElementById('field_closer_sub').innerText,
+                cl_d: document.getElementById('field_closer_desc').innerText,
+                btn_cta1_txt: document.getElementById('btn_cta1').innerText,
+                btn_cta2_txt: document.getElementById('btn_cta2').innerText,
+                btn_closer_cta_txt: document.getElementById('btn_closer_cta').innerText,
+                hides: Array.from(document.querySelectorAll('.cta-wrapper.hidden')).map(el => {
+                    const child = el.querySelector('[id]');
+                    return child ? child.id : null;
+                }).filter(id => id),
+                imgs: imageSources
+            };
+        }
+
+        function saveStateToURL(silent = false) {
+            const state = getWorkspaceStateJSON();
+            const hash = btoa(unescape(encodeURIComponent(JSON.stringify(state))));
+            window.location.hash = `state=${hash}`;
+            
+            // Auto-Backup active draft
+            localStorage.setItem('edm_workspace_backup', hash);
+            
+            if (!silent) showToast("Share Link Copied!");
         }
 
         function triggerCopyLink() {
@@ -540,22 +626,60 @@
             setTimeout(() => t.classList.add('-translate-y-24'), 3000);
         }
 
-        function loadStateFromURL(hash) {
-            try {
-                const state = JSON.parse(decodeURIComponent(escape(atob(hash.substring(7)))));
-                const fields = { field_subject: 'subject', field_preview_text: 'preview', field_wayfinder: 'wayfinder', field_eyebrow: 'eyebrow', field_headline: 'headline', field_headline_accent: 'accent', field_description: 'desc', field_disclaimer: 'disc', field_feature_title: 'f_t', field_ft1_title: 'ft1_t', field_ft1_desc: 'ft1_d', field_ft2_title: 'ft2_t', field_ft2_desc: 'ft2_d', field_ft3_title: 'ft3_t', field_ft3_desc: 'ft3_d', field_closer_sub: 'cl_t', field_closer_desc: 'cl_d' };
-                Object.keys(fields).forEach(id => { if(state[fields[id]]) document.getElementById(id).innerText = state[fields[id]]; });
-                
-                // Clear active button hidings before applying saved layout patterns
-                document.querySelectorAll('.cta-wrapper').forEach(w => w.classList.remove('hidden'));
-                if (state.hides) state.hides.forEach(id => {
+        function loadStateFromJSON(state) {
+            const fields = { 
+                field_subject: 'subject', 
+                field_preview_text: 'preview', 
+                field_wayfinder: 'wayfinder', 
+                field_eyebrow: 'eyebrow', 
+                field_headline: 'headline', 
+                field_headline_accent: 'accent', 
+                field_description: 'desc', 
+                field_disclaimer: 'disc', 
+                field_sec_eyebrow: 'sec_eyebrow',
+                field_sec_headline: 'sec_headline',
+                field_sec_description: 'sec_description',
+                field_feature_title: 'f_t', 
+                field_ft1_title: 'ft1_t', 
+                field_ft1_desc: 'ft1_d', 
+                field_ft2_title: 'ft2_t', 
+                field_ft2_desc: 'ft2_d', 
+                field_ft3_title: 'ft3_t', 
+                field_ft3_desc: 'ft3_d', 
+                field_closer_sub: 'cl_t', 
+                field_closer_desc: 'cl_d' 
+            };
+            
+            Object.keys(fields).forEach(id => { 
+                if(state[fields[id]] !== undefined) document.getElementById(id).innerText = state[fields[id]]; 
+            });
+
+            // Restore CTA texts verbatim
+            if (state.btn_cta1_txt) document.getElementById('btn_cta1').innerText = state.btn_cta1_txt;
+            if (state.btn_cta2_txt) document.getElementById('btn_cta2').innerText = state.btn_cta2_txt;
+            if (state.btn_closer_cta_txt) document.getElementById('btn_closer_cta').innerText = state.btn_closer_cta_txt;
+            
+            // Hiding toggled buttons
+            document.querySelectorAll('.cta-wrapper').forEach(w => w.classList.remove('hidden'));
+            if (state.hides) {
+                state.hides.forEach(id => {
                     const btn = document.getElementById(id);
                     if (btn) btn.closest('.cta-wrapper').classList.add('hidden');
                 });
-                
-                if (state.imgs) Object.keys(state.imgs).forEach(k => applyImageToElement(k, state.imgs[k].type, state.imgs[k].value));
-                syncInboxPreviews(); updateRestoreButtonVisibility();
-            } catch (e) { console.error("Restore payload parse failure:", e); }
+            }
+            
+            if (state.imgs) {
+                Object.keys(state.imgs).forEach(k => applyImageToElement(k, state.imgs[k].type, state.imgs[k].value));
+            }
+            updateRestoreButtonVisibility();
+        }
+
+        function loadStateFromURL(hash) {
+            try {
+                const state = JSON.parse(decodeURIComponent(escape(atob(hash.substring(7)))));
+                loadStateFromJSON(state);
+                syncInboxPreviews();
+            } catch (e) { console.error("URL state recovery failed:", e); }
         }
     </script>
 </body>
